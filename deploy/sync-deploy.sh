@@ -43,6 +43,12 @@ ensure_pm2() {
   if ! command -v pm2 >/dev/null 2>&1; then
     npm install -g pm2
   fi
+
+  local npm_global_bin
+  npm_global_bin="$(npm prefix -g)/bin"
+  if [[ ":$PATH:" != *":$npm_global_bin:"* ]]; then
+    export PATH="$npm_global_bin:$PATH"
+  fi
 }
 
 install_dependencies() {
