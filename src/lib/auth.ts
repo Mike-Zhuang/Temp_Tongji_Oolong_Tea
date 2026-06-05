@@ -26,3 +26,11 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 export function isTongjiEmail(email: string) {
   return email.trim().toLowerCase().endsWith("@tongji.edu.cn");
 }
+
+export function isAllowedLoginEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  return (
+    normalizedEmail === ADMIN_EMAIL.toLowerCase() ||
+    normalizedEmail.endsWith("@tongji.edu.cn")
+  );
+}

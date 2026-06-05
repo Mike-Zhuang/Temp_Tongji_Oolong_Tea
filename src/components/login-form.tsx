@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ADMIN_EMAIL } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 interface LoginFormProps {
@@ -24,8 +25,13 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
       return;
     }
 
-    if (!email.trim().toLowerCase().endsWith("@tongji.edu.cn")) {
-      setMessage("只允许使用 @tongji.edu.cn 校园邮箱登录。");
+    const normalizedEmail = email.trim().toLowerCase();
+    const canLogin =
+      normalizedEmail === ADMIN_EMAIL.toLowerCase() ||
+      normalizedEmail.endsWith("@tongji.edu.cn");
+
+    if (!canLogin) {
+      setMessage("只允许使用同济校园邮箱，管理员可使用预设管理员邮箱登录。");
       return;
     }
 
@@ -67,7 +73,7 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="example@tongji.edu.cn"
+          placeholder="example@tongji.edu.cn 或管理员邮箱"
           disabled={!isEnabled}
           className="w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
         />
