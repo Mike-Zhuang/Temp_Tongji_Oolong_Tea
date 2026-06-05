@@ -74,7 +74,7 @@ reload_nginx_if_possible() {
 
 stop_pm2_if_possible() {
   if command -v pm2 >/dev/null 2>&1; then
-    pm2 delete "$APP_NAME" >/dev/null || true
+    pm2 delete "$APP_NAME" >/dev/null 2>&1 || true
     pm2 save >/dev/null || true
     echo "[tongji-oolong-tea-sync] old pm2 app removed if it existed: $APP_NAME"
   fi
