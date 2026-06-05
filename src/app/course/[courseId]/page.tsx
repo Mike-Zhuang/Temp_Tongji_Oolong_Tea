@@ -29,7 +29,7 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+    <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)] lg:items-start lg:px-8">
       <div className="space-y-8">
         <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-6">
@@ -128,17 +128,105 @@ export default async function CoursePage({ params, searchParams }: CoursePagePro
         </section>
       </div>
 
-      <div className="space-y-6">
-        <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
-          <h2 className="text-lg font-bold text-stone-900">选课前可以重点看</h2>
-          <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
-            <li>评论里提到的考核方式和作业量是否符合你的时间安排。</li>
-            <li>成绩原文是否稳定，比如“优”“A”“W”“未知”等实际结果。</li>
-            <li>老师名下其他课程的口碑是否一致，避免只看单门课样本。</li>
-          </ul>
+      <div className="lg:sticky lg:top-24">
+        <div className="space-y-6">
+          <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-500">
+                  快速结论
+                </p>
+                <h2 className="mt-2 text-lg font-bold text-stone-900">这门课值不值得点开细看</h2>
+              </div>
+              <div className="rounded-2xl bg-orange-50 px-4 py-3 text-right">
+                <p className="text-2xl font-black text-stone-900">{formatRating(course.averageRating)}</p>
+                <p className="mt-1 text-xs text-stone-500">{course.reviewCount} 条评论</p>
+              </div>
+            </div>
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-stone-600">
+              <li>先看评分和评论总数，样本量足够时参考价值会明显更高。</li>
+              <li>再看最近活跃时间，避免把很老的口碑直接套用到现在。</li>
+              <li>如果成绩原文很分裂，优先看评论正文里的考核和给分细节。</li>
+            </ul>
+            <Link
+              href={`/write-review/${course.id}`}
+              className="mt-5 inline-flex rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700"
+            >
+              我也写一条评论
+            </Link>
+          </div>
+
+          <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
+            <h2 className="text-lg font-bold text-stone-900">课程信息</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <InfoBlock label="课号" value={course.code} />
+              <InfoBlock label="学分" value={`${course.credit}`} />
+              <InfoBlock label="院系" value={course.department ?? "院系暂缺"} />
+              <InfoBlock label="最近活跃" value={formatDateTime(course.lastReviewAt)} />
+            </div>
+            <div className="mt-4">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-stone-400">授课老师</p>
+              <Link
+                href={buildTeacherUrl(course.teacherSlug)}
+                className="mt-2 block text-base font-semibold text-stone-900 hover:text-orange-600"
+              >
+                {course.teacherName}
+              </Link>
+            </div>
+            <div className="mt-4">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-stone-400">课程分类</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {course.categories.map((category) => (
+                  <span
+                    key={category}
+                    className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-600"
+                  >
+                    {category}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
+            <h2 className="text-lg font-bold text-stone-900">评分分布</h2>
+            <div className="mt-4 space-y-3">
+              {course.ratingDistribution.map((item) => {
+                const percentage =
+                  course.reviewCount > 0 ? Math.round((item.count / course.reviewCount) * 100) : 0;
+
+                return (
+                  <div key={item.stars} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm text-stone-600">
+                      <span>{item.stars} 星</span>
+                      <span>
+                        {item.count} 条 · {percentage}%
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-stone-100">
+                      <div
+                        className="h-full rounded-full bg-orange-500 transition-all"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <BuyMeACoffeeCard />
         </div>
-        <BuyMeACoffeeCard />
       </div>
+    </div>
+  );
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[24px] bg-stone-50 p-3">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-stone-400">{label}</p>
+      <p className="mt-2 text-sm font-semibold leading-6 text-stone-900">{value}</p>
     </div>
   );
 }
