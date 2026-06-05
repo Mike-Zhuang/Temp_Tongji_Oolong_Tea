@@ -99,9 +99,10 @@ FETCH_HASH=$(git rev-parse origin/main)
 git reset --hard HEAD >/dev/null 2>&1 || true
 git clean -fd >/dev/null 2>&1 || true
 
+NEEDS_BUILD=1
 if [[ "$LOCAL_HASH" == "$FETCH_HASH" && -d "$APP_DIR/.next" ]]; then
-  echo "[tongji-oolong-tea-sync] no update"
-  exit 0
+  NEEDS_BUILD=0
+  echo "[tongji-oolong-tea-sync] no code update, reuse existing build"
 fi
 
 git checkout -B main origin/main
@@ -109,8 +110,10 @@ git reset --hard origin/main
 ensure_runtime_env
 ensure_pm2
 
-install_dependencies
-npm run build
+if [[ "$NEEDS_BUILD" -eq 1 ]]; then
+  install_dependencies
+  npm run build
+fi
 
 pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save >/dev/null
