@@ -6,6 +6,7 @@ APP_NAME=tongji-oolong-tea
 MAIN_REF=refs/heads/main
 LOCK_FILE=/tmp/tongji-oolong-tea-sync.lock
 NPM_REGISTRY=https://registry.npmmirror.com
+NPM_FALLBACK_REGISTRY=https://registry.npmjs.org
 CANDIDATES=(
   https://gh-proxy.com/https://github.com/Mike-Zhuang/Temp_Tongji_Oolong_Tea.git
   https://gitproxy.click/https://github.com/Mike-Zhuang/Temp_Tongji_Oolong_Tea.git
@@ -42,6 +43,20 @@ ensure_pm2() {
   if ! command -v pm2 >/dev/null 2>&1; then
     npm install -g pm2
   fi
+}
+
+install_dependencies() {
+  npm config set registry "$NPM_REGISTRY"
+  if npm ci --no-audit --no-fund --loglevel=error; then
+    echo "[tongji-oolong-tea-sync] npm ci succeeded with $NPM_REGISTRY"
+    return 0
+  fi
+
+  echo "[tongji-oolong-tea-sync] npm ci failed with $NPM_REGISTRY, fallback to $NPM_FALLBACK_REGISTRY"
+  rm -rf node_modules
+  npm config set registry "$NPM_FALLBACK_REGISTRY"
+  npm ci --no-audit --no-fund --loglevel=error
+  echo "[tongji-oolong-tea-sync] npm ci succeeded with $NPM_FALLBACK_REGISTRY"
 }
 
 reload_nginx_if_possible() {
@@ -85,8 +100,7 @@ git reset --hard origin/main
 ensure_runtime_env
 ensure_pm2
 
-npm config set registry "$NPM_REGISTRY"
-npm ci --no-audit --no-fund --loglevel=error
+install_dependencies
 npm run build
 
 pm2 startOrReload ecosystem.config.cjs --update-env
