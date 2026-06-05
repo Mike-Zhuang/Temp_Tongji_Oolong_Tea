@@ -72,12 +72,31 @@ reload_nginx_if_possible() {
 
 health_check() {
   for i in {1..30}; do
-    if curl -fsS http://127.0.0.1:3107/api/health >/dev/null; then
+    if curl -fsS http://127.0.0.1:3107/api/health >/dev/null 2>&1; then
       return 0
     fi
     sleep 1
   done
   return 1
+}
+
+is_pm2_online() {
+  local status
+  status="$(pm2 jlist 2>/dev/null | node -e '
+    const chunks = [];
+    process.stdin.on("data", (c) => chunks.push(c));
+    process.stdin.on("end", () => {
+      try {
+        const apps = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+        const app = apps.find((item) => item.name === process.argv[1]);
+        process.stdout.write(app?.pm2_env?.status || "");
+      } catch {
+        process.stdout.write("");
+      }
+    });
+  ' "$APP_NAME")"
+
+  [[ "$status" == "online" ]]
 }
 
 picked=$(pick_source) || { echo "[tongji-oolong-tea-sync] no reachable gitproxy source"; exit 1; }
@@ -115,8 +134,20 @@ if [[ "$NEEDS_BUILD" -eq 1 ]]; then
   npm run build
 fi
 
-pm2 startOrReload ecosystem.config.cjs --update-env
-pm2 save >/dev/null
+if [[ "$NEEDS_BUILD" -eq 1 ]]; then
+  pm2 startOrReload ecosystem.config.cjs --update-env
+  pm2 save >/dev/null
+else
+  if is_pm2_online && health_check; then
+    echo "[tongji-oolong-tea-sync] app already online, skip reload"
+    echo "[tongji-oolong-tea-sync] deployed $FETCH_HASH"
+    exit 0
+  fi
+
+  echo "[tongji-oolong-tea-sync] app not healthy, restart pm2 process"
+  pm2 startOrReload ecosystem.config.cjs --update-env
+  pm2 save >/dev/null
+fi
 
 if ! health_check; then
   echo "[tongji-oolong-tea-sync] health check failed"
