@@ -5,6 +5,7 @@ APP_DIR=/opt/tongji-oolong-tea
 SITE_ROOT=/www/wwwroot/1.mikezhuang.cn
 APP_NAME=tongji-oolong-tea
 DOMAIN=1.mikezhuang.cn
+DEPLOY_HASH_FILE=/www/wwwroot/1.mikezhuang.cn/.deploy_hash
 MAIN_REF=refs/heads/main
 LOCK_FILE=/tmp/tongji-oolong-tea-sync.lock
 NPM_REGISTRY=https://registry.npmmirror.com
@@ -95,6 +96,7 @@ publish_static_files() {
     -exec rm -rf {} +
 
   cp -a "$APP_DIR/dist/." "$SITE_ROOT/"
+  printf '%s\n' "$FETCH_HASH" > "$DEPLOY_HASH_FILE"
   echo "[tongji-oolong-tea-sync] static files published to $SITE_ROOT"
 }
 
@@ -176,7 +178,8 @@ git reset --hard origin/main
 ensure_runtime_env
 
 NEEDS_BUILD=1
-if [[ "$LOCAL_HASH" == "$FETCH_HASH" && -f "$SITE_ROOT/index.html" && -d "$APP_DIR/dist" ]]; then
+DEPLOYED_HASH="$(cat "$DEPLOY_HASH_FILE" 2>/dev/null || true)"
+if [[ "$LOCAL_HASH" == "$FETCH_HASH" && "$DEPLOYED_HASH" == "$FETCH_HASH" && -f "$SITE_ROOT/index.html" && -d "$APP_DIR/dist" ]]; then
   NEEDS_BUILD=0
   echo "[tongji-oolong-tea-sync] no code update, reuse existing static build"
 fi
