@@ -90,6 +90,9 @@ LOCAL_HASH=$(git rev-parse HEAD 2>/dev/null || true)
 git fetch --depth 1 origin main
 FETCH_HASH=$(git rev-parse origin/main)
 
+git reset --hard HEAD >/dev/null 2>&1 || true
+git clean -fd >/dev/null 2>&1 || true
+
 if [[ "$LOCAL_HASH" == "$FETCH_HASH" && -d "$APP_DIR/.next" ]]; then
   echo "[tongji-oolong-tea-sync] no update"
   exit 0
