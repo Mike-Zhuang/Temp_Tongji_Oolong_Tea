@@ -176,7 +176,7 @@ function HomePage() {
     return <LoadingState />;
   }
   if (error || !data) {
-    return <ErrorState message={error || "请确认 Supabase 环境变量和数据表已经配置。"} />;
+    return <ErrorState message={error || "课程数据暂时加载失败，请稍后重试。"} />;
   }
 
   return (
@@ -437,11 +437,11 @@ function AuthPage() {
         <SectionTitle
           eyebrow="校园邮箱登录"
           title="只允许 @tongji.edu.cn"
-          description={authEnabled ? "站内评论采用同济校园邮箱登录。发送登录链接后，点击邮件中的链接即可回到本站完成登录。" : "登录功能还在收尾配置中，当前先开放课程搜索与评论浏览。"}
+          description={authEnabled ? "站内评论采用同济校园邮箱登录。发送登录链接后，点击邮件中的链接即可回到本站完成登录。" : "登录配置暂不可用，请联系站长检查 Supabase 环境变量。"}
         />
         <div className="mt-8">
           <LoginForm isEnabled={authEnabled} />
-          {!authEnabled ? <EmptyState text="当前站点的浏览功能正常，校园邮箱登录和站内发评论会在配置完成后开放。" /> : null}
+          {!authEnabled ? <EmptyState text="登录配置暂不可用，暂时不能发送校园邮箱登录链接。" /> : null}
         </div>
       </section>
       <section className="rounded-[36px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">

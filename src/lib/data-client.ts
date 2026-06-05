@@ -1,9 +1,13 @@
 import { ADMIN_EMAIL, DEPARTMENT_FALLBACK } from "@/lib/constants";
+import rawCourses from "../../scripts/seed-data/wlc.courses.json";
+import rawRatings from "../../scripts/seed-data/wlc.ratings.json";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type {
   AdminReviewUpdateInput,
   Course,
   HomePageData,
+  RawCourse,
+  RawRating,
   Review,
   ReviewFormInput,
   ReviewSort,
@@ -70,6 +74,49 @@ interface DataIndex {
 
 let dataIndexPromise: Promise<DataIndex> | null = null;
 
+function mapSeedCourse(row: RawCourse): CourseRow {
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    teacher_name: row.teacher,
+    teacher_slug: slugifyTeacherName(row.teacher),
+    department: row.department,
+    credit: row.credit,
+    categories: row.categories,
+    seed_rating_count: row.rating.count,
+    seed_rating_average: row.rating.avg,
+  };
+}
+
+function mapSeedReview(row: RawRating): ReviewRow {
+  return {
+    id: `seed-${row.id}`,
+    source_id: row.id,
+    course_id: row.course.id,
+    course_code: row.course.code,
+    course_name: row.course.name,
+    teacher_name: row.course.teacher,
+    teacher_slug: slugifyTeacherName(row.course.teacher),
+    semester: row.semester,
+    rating: row.rating,
+    comment: row.comment,
+    created_at: row.created_at,
+    modified_at: row.modified_at,
+    score: row.score,
+    moderator_remark: row.moderator_remark,
+    approves: row.reactions.approves,
+    disapproves: row.reactions.disapproves,
+    publish_status: "published",
+    source: "seed",
+    tags: [],
+    user_id: null,
+  };
+}
+
+const seedCourseRows = (rawCourses as RawCourse[]).map(mapSeedCourse);
+const seedReviewRows = (rawRatings as RawRating[]).map(mapSeedReview);
+
 async function fetchAllRows<T>(tableName: string, orderColumn: string) {
   const supabase = createSupabaseBrowserClient();
   if (!supabase) {
@@ -98,6 +145,37 @@ async function fetchAllRows<T>(tableName: string, orderColumn: string) {
     if (pageRows.length < pageSize) {
       return rows;
     }
+  }
+}
+
+async function fetchSupabaseRows() {
+  const supabase = createSupabaseBrowserClient();
+  if (!supabase) {
+    return {
+      courses: [] as CourseRow[],
+      reviews: [] as ReviewRow[],
+      canUseDatabase: false,
+    };
+  }
+
+  try {
+    const [courses, reviews] = await Promise.all([
+      fetchAllRows<CourseRow>("courses", "id"),
+      fetchAllRows<ReviewRow>("course_reviews", "created_at"),
+    ]);
+
+    return {
+      courses,
+      reviews,
+      canUseDatabase: courses.length > 0,
+    };
+  } catch (error) {
+    console.warn("Supabase 数据表暂不可用，已回退到内置评课数据。", error);
+    return {
+      courses: [] as CourseRow[],
+      reviews: [] as ReviewRow[],
+      canUseDatabase: false,
+    };
   }
 }
 
@@ -259,10 +337,13 @@ function buildDataIndex(courseRows: CourseRow[], reviewRows: ReviewRow[]): DataI
 
 async function loadDataIndex() {
   if (!dataIndexPromise) {
-    dataIndexPromise = Promise.all([
-      fetchAllRows<CourseRow>("courses", "id"),
-      fetchAllRows<ReviewRow>("course_reviews", "created_at"),
-    ]).then(([courses, reviews]) => buildDataIndex(courses, reviews));
+    dataIndexPromise = fetchSupabaseRows().then((supabaseData) => {
+      if (supabaseData.canUseDatabase) {
+        return buildDataIndex(supabaseData.courses, supabaseData.reviews);
+      }
+
+      return buildDataIndex(seedCourseRows, seedReviewRows);
+    });
   }
 
   return dataIndexPromise;

@@ -67,6 +67,13 @@ install_dependencies() {
   echo "[tongji-oolong-tea-sync] npm ci succeeded with $NPM_FALLBACK_REGISTRY"
 }
 
+export_vite_env() {
+  set -a
+  # shellcheck disable=SC1091
+  . "$APP_DIR/.env.production.local"
+  set +a
+}
+
 reload_nginx_if_possible() {
   nginx -t >/dev/null
   /www/server/nginx/sbin/nginx -s reload >/dev/null 2>&1 || nginx -s reload >/dev/null 2>&1 || true
@@ -177,6 +184,7 @@ fi
 if [[ "$NEEDS_BUILD" -eq 1 ]]; then
   rm -rf .next dist
   install_dependencies
+  export_vite_env
   npm run build
 fi
 
