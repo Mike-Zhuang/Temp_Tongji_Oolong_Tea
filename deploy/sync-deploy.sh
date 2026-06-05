@@ -93,6 +93,25 @@ publish_static_files() {
 
 ensure_nginx_static_site() {
   local nginx_conf="/www/server/panel/vhost/nginx/${DOMAIN}.conf"
+  local proxy_dir="/www/server/panel/vhost/nginx/proxy/${DOMAIN}"
+  local rewrite_conf="/www/server/panel/vhost/rewrite/${DOMAIN}.conf"
+
+  if [[ -d "$proxy_dir" ]]; then
+    for proxy_conf in "$proxy_dir"/*.conf; do
+      [[ -f "$proxy_conf" ]] || continue
+      mv "$proxy_conf" "${proxy_conf}.disabled.$(date +%Y%m%d%H%M%S)"
+      echo "[tongji-oolong-tea-sync] disabled old reverse proxy: $proxy_conf"
+    done
+  fi
+
+  install -d -m 755 "$(dirname "$rewrite_conf")"
+  if [[ ! -f "$rewrite_conf" ]] || ! grep -q 'try_files \$uri \$uri/ /index.html;' "$rewrite_conf"; then
+    cat > "$rewrite_conf" <<'EOF'
+try_files $uri $uri/ /index.html;
+EOF
+    echo "[tongji-oolong-tea-sync] spa rewrite ensured: $rewrite_conf"
+  fi
+
   if [[ ! -f "$nginx_conf" ]]; then
     echo "[tongji-oolong-tea-sync] nginx conf not found, skip auto static rewrite: $nginx_conf"
     return 0
