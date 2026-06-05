@@ -1,4 +1,4 @@
-import { ACKNOWLEDGEMENT_LINK, SITE_NAME } from "@/lib/constants";
+import { ACKNOWLEDGEMENT_LINK, ICP_FILING_LINK, ICP_FILING_NUMBER, SITE_NAME } from "@/lib/constants";
 
 export function SiteFooter() {
   return (
@@ -16,6 +16,17 @@ export function SiteFooter() {
           </a>
           <a href="/admin" className="hover:text-stone-900">
             管理后台
+          </a>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-2 text-xs text-stone-500">
+          <a
+            href={ICP_FILING_LINK}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 hover:text-stone-800"
+          >
+            <img src="/beian-icon.png" alt="" width={16} height={16} className="h-4 w-4" />
+            <span>{ICP_FILING_NUMBER}</span>
           </a>
         </div>
       </div>

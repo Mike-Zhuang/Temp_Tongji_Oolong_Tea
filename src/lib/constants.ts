@@ -7,6 +7,10 @@ export const SITE_DESCRIPTION =
 
 export const ACKNOWLEDGEMENT_LINK = "https://1.tongji.icu";
 
+export const ICP_FILING_NUMBER = "沪ICP备2026015123号";
+
+export const ICP_FILING_LINK = "https://beian.miit.gov.cn/";
+
 export const ADMIN_EMAIL = "tjpush_admin@mikezhuang.cn";
 
 export const REVIEW_TAG_OPTIONS: ReviewTagOption[] = [
