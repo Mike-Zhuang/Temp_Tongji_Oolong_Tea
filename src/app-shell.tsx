@@ -13,6 +13,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Stars } from "@/components/stars";
 import { TeacherCard } from "@/components/teacher-card";
+import { Button } from "@/components/ui/button";
+import { PageSection } from "@/components/ui/page-section";
+import { SortPills } from "@/components/ui/sort-pills";
+import { StatInline } from "@/components/ui/stat-inline";
 import { REVIEW_SORT_OPTIONS, SEARCH_SORT_OPTIONS, SITE_DESCRIPTION } from "@/lib/constants";
 import {
   getAdminReviews,
@@ -163,7 +167,7 @@ function LoadingState({ text = "正在加载课程数据..." }: { text?: string 
 function ErrorState({ message }: { message: string }) {
   return (
     <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center px-4 text-center">
-      <h1 className="text-3xl font-black text-stone-900">数据暂时没加载出来</h1>
+      <h1 className="text-3xl font-bold text-stone-900">数据暂时没加载出来</h1>
       <p className="mt-4 text-sm leading-7 text-stone-600">{message}</p>
     </div>
   );
@@ -181,41 +185,43 @@ function HomePage() {
 
   return (
     <div className="pb-16">
-      <section className="noise-panel overflow-hidden">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-18">
-          <div className="relative rounded-[40px] border border-white/80 bg-[linear-gradient(135deg,_rgba(255,255,255,0.88),_rgba(255,244,231,0.98))] p-8 shadow-xl shadow-orange-950/10 sm:p-10">
-            <div className="inline-flex rounded-full bg-stone-900 px-4 py-2 text-xs font-bold uppercase tracking-[0.3em] text-white">
-              Tongji Course Radar
+      <section className="overflow-hidden">
+        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-16">
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs font-medium text-orange-600">同济课程雷达</p>
+              <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight tracking-tight text-stone-900 sm:text-5xl">
+                先搜老师，再决定这门课值不值得上。
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg">
+                {SITE_DESCRIPTION} 搜索课程名或老师名后，你可以一眼看到老师名下全部课程、每门课的历史评论、评分走势和真实上课体验。
+              </p>
             </div>
-            <h1 className="mt-6 max-w-3xl text-4xl font-black leading-tight tracking-tight text-stone-900 sm:text-5xl">
-              先搜老师，再决定这门课值不值得上。
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-stone-600 sm:text-lg">
-              {SITE_DESCRIPTION} 搜索课程名或老师名后，你可以一眼看到老师名下全部课程、每门课的历史评论、评分走势和真实上课体验。
-            </p>
-            <div className="mt-8 max-w-3xl">
+            <div className="max-w-3xl">
               <SearchBar large />
             </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-4">
-              <StatCard label="课程" value={data.siteStats.courseCount.toString()} />
-              <StatCard label="老师" value={data.siteStats.teacherCount.toString()} />
-              <StatCard label="评论" value={data.siteStats.reviewCount.toString()} />
-              <StatCard label="分类" value={data.siteStats.categoryCount.toString()} />
-            </div>
+            <StatInline
+              items={[
+                { label: "课程", value: data.siteStats.courseCount.toString() },
+                { label: "老师", value: data.siteStats.teacherCount.toString() },
+                { label: "评论", value: data.siteStats.reviewCount.toString() },
+                { label: "分类", value: data.siteStats.categoryCount.toString() },
+              ]}
+            />
           </div>
           <div className="space-y-6">
-            <div className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5">
+            <PageSection>
               <SectionTitle
                 eyebrow="新鲜热评"
                 title="最近大家在说什么"
                 description="首屏先把最近有讨论的课程摆出来，方便快速捞到当学期活跃评价。"
               />
-              <div className="mt-5 space-y-4">
+              <div className="mt-5">
                 {data.latestReviews.slice(0, 3).map((review) => (
                   <ReviewCard key={review.id} review={review} showCourseMeta />
                 ))}
               </div>
-            </div>
+            </PageSection>
             <BuyMeACoffeeCard />
           </div>
         </div>
@@ -245,7 +251,7 @@ function SearchPage({ query, sort }: { query: string; sort: SearchSort }) {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="rounded-[36px] border border-orange-100 bg-white/90 p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+      <PageSection>
         <SectionTitle
           eyebrow="搜索"
           title="找课程，也找老师"
@@ -254,8 +260,12 @@ function SearchPage({ query, sort }: { query: string; sort: SearchSort }) {
         <div className="mt-6">
           <SearchBar initialQuery={query} />
         </div>
-        <SortLinks basePath="/search" query={query} sort={sort} options={SEARCH_SORT_OPTIONS} />
-      </div>
+        <SortPills
+          options={SEARCH_SORT_OPTIONS}
+          activeValue={sort}
+          getHref={(value) => `/search?q=${encodeURIComponent(query)}&sort=${value}`}
+        />
+      </PageSection>
       <div className="mt-10 grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
         <section className="space-y-5">
           <SectionTitle eyebrow="老师结果" title={`匹配到 ${data.teachers.length} 位老师`} />
@@ -286,23 +296,27 @@ function TeacherPage({ teacherSlug }: { teacherSlug: string }) {
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
       <div className="space-y-8">
-        <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+        <PageSection>
           <SectionTitle
             eyebrow="教师主页"
             title={teacher.name}
             description="这里按老师聚合同名下全部课程，适合判断这位老师整体的上课风格、给分习惯和稳定性。"
           />
-          <div className="mt-6 grid gap-4 sm:grid-cols-4">
-            <StatCard label="名下课程" value={teacher.courseCount.toString()} />
-            <StatCard label="累计评论" value={teacher.reviewCount.toString()} />
-            <StatCard label="平均评分" value={formatRating(teacher.averageRating)} />
-            <StatCard label="最近活跃" value={teacher.lastReviewAt ? formatDateTime(teacher.lastReviewAt) : "暂无"} />
+          <div className="mt-6">
+            <StatInline
+              items={[
+                { label: "名下课程", value: teacher.courseCount.toString() },
+                { label: "累计评论", value: teacher.reviewCount.toString() },
+                { label: "平均评分", value: formatRating(teacher.averageRating) },
+                { label: "最近活跃", value: teacher.lastReviewAt ? formatDateTime(teacher.lastReviewAt) : "暂无" },
+              ]}
+            />
           </div>
           <div className="mt-5 flex items-center gap-3">
             <Stars rating={teacher.averageRating} />
             <p className="text-sm text-stone-500">涉及院系：{teacher.departmentHints.join("、")}</p>
           </div>
-        </section>
+        </PageSection>
         <section className="space-y-5">
           <SectionTitle
             eyebrow="全部课程"
@@ -336,7 +350,7 @@ function CoursePage({ courseId, sort }: { courseId: number; sort: ReviewSort }) 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)] lg:items-start lg:px-8">
       <div className="space-y-8">
-        <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+        <PageSection>
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="max-w-3xl">
               <SectionTitle
@@ -355,34 +369,38 @@ function CoursePage({ courseId, sort }: { courseId: number; sort: ReviewSort }) 
                 {course.categories.map((category) => <Pill key={category}>{category}</Pill>)}
               </div>
             </div>
-            <div className="min-w-52 rounded-[32px] bg-stone-900 p-5 text-white">
-              <p className="text-sm text-white/70">课程总评分</p>
-              <p className="mt-2 text-5xl font-black">{formatRating(course.averageRating)}</p>
+            <div className="min-w-52 border-l-4 border-orange-500 pl-5">
+              <p className="text-sm text-stone-500">课程总评分</p>
+              <p className="mt-2 text-4xl font-bold text-stone-900">{formatRating(course.averageRating)}</p>
               <div className="mt-3"><Stars rating={course.averageRating} /></div>
-              <p className="mt-3 text-sm text-white/70">{course.reviewCount} 条评论</p>
-              <p className="mt-1 text-sm text-white/70">最近活跃：{formatDateTime(course.lastReviewAt)}</p>
+              <p className="mt-3 text-sm text-stone-500">{course.reviewCount} 条评论</p>
+              <p className="mt-1 text-sm text-stone-500">最近活跃：{formatDateTime(course.lastReviewAt)}</p>
             </div>
           </div>
-        </section>
-        <section className="rounded-[36px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
+        </PageSection>
+        <PageSection>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <SectionTitle
               eyebrow="评论区"
               title={`${course.reviewCount} 条历史评论`}
               description="支持按最新、最热、高分、低分排序。超长评论默认折叠，点开可看全文。"
             />
-            <a href={`/write-review/${course.id}`} className="rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600">写一条评论</a>
+            <Button href={`/write-review/${course.id}`}>写一条评论</Button>
           </div>
-          <ReviewSortLinks courseId={course.id} sort={sort} />
-          <div className="mt-6 space-y-5">
+          <SortPills
+            options={REVIEW_SORT_OPTIONS}
+            activeValue={sort}
+            getHref={(value) => `/course/${courseId}?sort=${value}`}
+          />
+          <div className="mt-6">
             {course.reviews.length ? course.reviews.map((review) => (
               <div key={review.id}>
                 <ReviewCard review={review} />
-                <div className="mt-3"><ReportReviewButton reviewId={review.id} /></div>
+                <div className="pb-5"><ReportReviewButton reviewId={review.id} /></div>
               </div>
             )) : <EmptyState text="这门课暂时还没有评论，欢迎成为第一个留下经验的人。" />}
           </div>
-        </section>
+        </PageSection>
       </div>
       <div className="lg:sticky lg:top-24">
         <CourseSidebar course={course} />
@@ -406,7 +424,7 @@ function WriteReviewPage({ courseId, user }: { courseId: number; user: UserProfi
 
   return (
     <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8">
-      <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+      <PageSection>
         <SectionTitle
           eyebrow="写评论"
           title={`${course.name} · ${course.teacherName}`}
@@ -415,15 +433,15 @@ function WriteReviewPage({ courseId, user }: { courseId: number; user: UserProfi
         <div className="mt-8">
           {user ? <ReviewForm course={course} user={user} /> : <LoginRequired />}
         </div>
-      </section>
-      <section className="rounded-[36px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
+      </PageSection>
+      <PageSection variant="muted">
         <h2 className="text-lg font-bold text-stone-900">写作建议</h2>
         <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
           <li>越具体越有用，比如“论文 1000 字”“每周点名”“上课几乎不管”这类细节。</li>
           <li>成绩字段保留原文即可，不需要为了统一格式硬改成 A/B/C。</li>
           <li>如果是强烈主观看法，尽量补上你为什么这么判断，方便别人自己衡量。</li>
         </ul>
-      </section>
+      </PageSection>
     </div>
   );
 }
@@ -433,7 +451,7 @@ function AuthPage() {
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:px-8">
-      <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+      <PageSection>
         <SectionTitle
           eyebrow="校园邮箱登录"
           title="只允许 @tongji.edu.cn"
@@ -443,14 +461,14 @@ function AuthPage() {
           <LoginForm isEnabled={authEnabled} />
           {!authEnabled ? <EmptyState text="登录配置暂不可用，暂时不能发送校园邮箱登录链接。" /> : null}
         </div>
-      </section>
-      <section className="rounded-[36px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
+      </PageSection>
+      <PageSection variant="muted">
         <h2 className="text-lg font-bold text-stone-900">为什么这样做</h2>
         <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
           <li>先把发评论的门槛限定在同济校园邮箱，能显著减少灌水和恶意内容。</li>
           <li>登录后评论会直接公开，管理员主要处理被举报内容，不提前卡审核。</li>
         </ul>
-      </section>
+      </PageSection>
     </div>
   );
 }
@@ -523,10 +541,10 @@ function MePage({ user }: { user: UserProfile | null }) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
-      <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+      <PageSection>
         <SectionTitle eyebrow="我的评论" title="你发布过的历史记录" description="这里会列出你所有站内新增评论，方便回看和后续补充。" />
-      </section>
-      <div className="mt-8 space-y-5">
+      </PageSection>
+      <div className="mt-8 rounded-lg border border-stone-200 bg-white px-6">
         {data?.length ? data.map((review) => <ReviewCard key={review.id} review={review} showCourseMeta />) : <EmptyState text="你还没有发布过站内评论。先去搜索课程，再补上一条真实体验吧。" />}
       </div>
     </div>
@@ -551,19 +569,21 @@ function AdminPage({ user }: { user: UserProfile | null }) {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-      <section className="rounded-[36px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5 sm:p-8">
+      <PageSection>
         <SectionTitle eyebrow="管理后台" title="最新评论与举报处理" description="这里可以查看站内评论、被举报记录数、当前公开状态，并支持隐藏/恢复评论或补充管理员备注。" />
-      </section>
-      <div className="mt-8 space-y-5">
+      </PageSection>
+      <div className="mt-8 rounded-lg border border-stone-200 bg-white px-6">
         {data?.map((review) => (
-          <div key={review.id} className="rounded-[32px] border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/5">
+          <div key={review.id}>
             <ReviewCard review={review} showCourseMeta />
-            <div className="mt-3 flex flex-wrap gap-4 text-xs text-stone-500">
-              <span>当前状态：{review.publishStatus}</span>
-              <span>举报次数：{review.reportsCount ?? 0}</span>
-              <span>来源：{review.source}</span>
+            <div className="border-t border-stone-200 pb-5 pt-4">
+              <div className="flex flex-wrap gap-4 text-xs text-stone-500">
+                <span>当前状态：{review.publishStatus}</span>
+                <span>举报次数：{review.reportsCount ?? 0}</span>
+                <span>来源：{review.source}</span>
+              </div>
+              <AdminReviewActions review={review} />
             </div>
-            <AdminReviewActions review={review} />
           </div>
         ))}
       </div>
@@ -574,67 +594,87 @@ function AdminPage({ user }: { user: UserProfile | null }) {
 function CourseSidebar({ course }: { course: Course }) {
   return (
     <div className="space-y-6">
-      <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
-        <h2 className="text-lg font-bold text-stone-900">快速结论</h2>
-        <ul className="mt-5 space-y-3 text-sm leading-7 text-stone-600">
-          <li>先看评分和评论总数，样本量足够时参考价值会明显更高。</li>
-          <li>再看最近活跃时间，避免把很老的口碑直接套用到现在。</li>
-          <li>如果成绩原文很分裂，优先看评论正文里的考核和给分细节。</li>
-        </ul>
-        <a href={`/write-review/${course.id}`} className="mt-5 inline-flex rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">我也写一条评论</a>
-      </div>
-      <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
-        <h2 className="text-lg font-bold text-stone-900">评分分布</h2>
-        <div className="mt-4 space-y-3">
-          {course.ratingDistribution.map((item) => {
-            const percentage = course.reviewCount > 0 ? Math.round((item.count / course.reviewCount) * 100) : 0;
-            return (
-              <div key={item.stars} className="space-y-1">
-                <div className="flex items-center justify-between text-sm text-stone-600">
-                  <span>{item.stars} 星</span>
-                  <span>{item.count} 条 · {percentage}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-stone-100">
-                  <div className="h-full rounded-full bg-orange-500 transition-all" style={{ width: `${percentage}%` }} />
-                </div>
-              </div>
-            );
-          })}
+      <PageSection className="divide-y divide-stone-200 !p-0">
+        <div className="p-6">
+          <h2 className="text-lg font-bold text-stone-900">快速结论</h2>
+          <ul className="mt-5 space-y-3 text-sm leading-7 text-stone-600">
+            <li>先看评分和评论总数，样本量足够时参考价值会明显更高。</li>
+            <li>再看最近活跃时间，避免把很老的口碑直接套用到现在。</li>
+            <li>如果成绩原文很分裂，优先看评论正文里的考核和给分细节。</li>
+          </ul>
+          <Button href={`/write-review/${course.id}`} variant="secondary" className="mt-5">
+            我也写一条评论
+          </Button>
         </div>
-      </div>
+        <div className="p-6">
+          <h2 className="text-lg font-bold text-stone-900">评分分布</h2>
+          <div className="mt-4 space-y-3">
+            {course.ratingDistribution.map((item) => {
+              const percentage = course.reviewCount > 0 ? Math.round((item.count / course.reviewCount) * 100) : 0;
+              return (
+                <div key={item.stars} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm text-stone-600">
+                    <span>{item.stars} 星</span>
+                    <span>{item.count} 条 · {percentage}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-stone-100">
+                    <div className="h-full rounded-full bg-orange-500 transition-all" style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </PageSection>
       <BuyMeACoffeeCard />
     </div>
   );
 }
 
-function SortLinks({ basePath, query, sort, options }: {
-  basePath: string;
-  query: string;
-  sort: SearchSort;
-  options: typeof SEARCH_SORT_OPTIONS;
-}) {
+function EmptyState({ text }: { text: string }) {
   return (
-    <div className="mt-5 flex flex-wrap gap-3">
-      {options.map((option) => {
-        const active = option.value === sort;
-        const href = `${basePath}?q=${encodeURIComponent(query)}&sort=${option.value}`;
-        return <a key={option.value} href={href} className={`rounded-full px-4 py-2 text-sm transition ${active ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"}`}>{option.label}</a>;
-      })}
+    <div className="rounded-md bg-stone-50 p-6 text-center text-sm leading-7 text-stone-500">
+      {text}
     </div>
   );
 }
 
-function ReviewSortLinks({ courseId, sort }: { courseId: number; sort: ReviewSort }) {
+function LoginRequired() {
   return (
-    <div className="mt-5 flex flex-wrap gap-3">
-      {REVIEW_SORT_OPTIONS.map((option) => {
-        const active = option.value === sort;
-        return <a key={option.value} href={`/course/${courseId}?sort=${option.value}`} className={`rounded-full px-4 py-2 text-sm transition ${active ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"}`}>{option.label}</a>;
-      })}
+    <div className="rounded-md bg-stone-50 p-6 text-sm leading-7 text-stone-600">
+      你还没有登录。请先使用 <span className="font-semibold">@tongji.edu.cn</span> 校园邮箱登录，再回来发布评论。
+      <div className="mt-5">
+        <Button href="/auth" variant="secondary">去登录</Button>
+      </div>
     </div>
   );
 }
 
+function LoginPrompt({ title, description, tone = "warm" }: { title: string; description: string; tone?: "warm" | "danger" }) {
+  return (
+    <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl flex-col items-center justify-center px-4 text-center">
+      <p className={`rounded-full px-4 py-2 text-xs font-medium ${tone === "danger" ? "bg-rose-100 text-rose-700" : "bg-orange-100 text-orange-700"}`}>
+        {tone === "danger" ? "管理员专用" : "我的评论"}
+      </p>
+      <h1 className="mt-6 text-4xl font-bold tracking-tight text-stone-900">{title}</h1>
+      <p className="mt-4 text-sm leading-7 text-stone-600">{description}</p>
+      <Button href="/auth" variant="secondary" className="mt-8">去登录</Button>
+    </div>
+  );
+}
+
+function GuideCard() {
+  return (
+    <PageSection variant="muted">
+      <h2 className="text-lg font-bold text-stone-900">如何看老师页</h2>
+      <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
+        <li>优先看“评论总数”而不是只看均分，样本越多越稳定。</li>
+        <li>如果同一老师不同课程分差很大，建议点进具体课程页看评论细节。</li>
+        <li>部分课程的院系字段在原始数据中缺失，页面会显示“院系暂缺”。</li>
+      </ul>
+    </PageSection>
+  );
+}
 function CardSection({ eyebrow, title, description, children, gridClassName = "lg:grid-cols-2" }: {
   eyebrow: string;
   title: string;
@@ -650,60 +690,6 @@ function CardSection({ eyebrow, title, description, children, gridClassName = "l
   );
 }
 
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/70 p-8 text-sm leading-7 text-stone-500">
-      {text}
-    </div>
-  );
-}
-
-function LoginRequired() {
-  return (
-    <div className="rounded-[28px] border border-dashed border-stone-300 bg-stone-50 p-8 text-sm leading-7 text-stone-600">
-      你还没有登录。请先使用 <span className="font-semibold">@tongji.edu.cn</span> 校园邮箱登录，再回来发布评论。
-      <div className="mt-5">
-        <a href="/auth" className="rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">去登录</a>
-      </div>
-    </div>
-  );
-}
-
-function LoginPrompt({ title, description, tone = "warm" }: { title: string; description: string; tone?: "warm" | "danger" }) {
-  return (
-    <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl flex-col items-center justify-center px-4 text-center">
-      <p className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] ${tone === "danger" ? "bg-rose-100 text-rose-700" : "bg-orange-100 text-orange-700"}`}>
-        {tone === "danger" ? "Admin Only" : "My Reviews"}
-      </p>
-      <h1 className="mt-6 text-4xl font-black tracking-tight text-stone-900">{title}</h1>
-      <p className="mt-4 text-sm leading-7 text-stone-600">{description}</p>
-      <a href="/auth" className="mt-8 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">去登录</a>
-    </div>
-  );
-}
-
-function GuideCard() {
-  return (
-    <div className="rounded-[32px] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-900/5">
-      <h2 className="text-lg font-bold text-stone-900">如何看老师页</h2>
-      <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
-        <li>优先看“评论总数”而不是只看均分，样本越多越稳定。</li>
-        <li>如果同一老师不同课程分差很大，建议点进具体课程页看评论细节。</li>
-        <li>部分课程的院系字段在原始数据中缺失，页面会显示“院系暂缺”。</li>
-      </ul>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[28px] bg-stone-100 p-4">
-      <p className="text-xs font-bold uppercase tracking-[0.22em] text-stone-400">{label}</p>
-      <p className="mt-2 text-xl font-black text-stone-900">{value}</p>
-    </div>
-  );
-}
-
 function Pill({ children }: { children: ReactNode }) {
   return <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-600">{children}</span>;
 }
@@ -711,9 +697,9 @@ function Pill({ children }: { children: ReactNode }) {
 function NotFoundPage() {
   return (
     <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl flex-col items-center justify-center px-4 text-center">
-      <h1 className="text-4xl font-black text-stone-900">页面没找到</h1>
+      <h1 className="text-4xl font-bold text-stone-900">页面没找到</h1>
       <p className="mt-4 text-sm text-stone-600">可能是课程或老师不存在，也可能是链接写错了。</p>
-      <a href="/search" className="mt-8 rounded-full bg-stone-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-700">回到搜索</a>
+      <Button href="/search" variant="secondary" className="mt-8">回到搜索</Button>
     </div>
   );
 }

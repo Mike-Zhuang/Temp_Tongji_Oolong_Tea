@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
+import { cn, clampText, formatDateTime } from "@/lib/utils";
+import { listDivider } from "@/lib/ui-classes";
 import type { Review } from "@/lib/types";
-import { clampText, formatDateTime } from "@/lib/utils";
 
 import { InfoPill } from "./info-pill";
 import { Stars } from "./stars";
@@ -11,11 +12,12 @@ import { Stars } from "./stars";
 interface ReviewCardProps {
   review: Review;
   showCourseMeta?: boolean;
+  variant?: "card" | "list";
 }
 
 const COLLAPSED_LENGTH = 220;
 
-export function ReviewCard({ review, showCourseMeta = false }: ReviewCardProps) {
+export function ReviewCard({ review, showCourseMeta = false, variant = "list" }: ReviewCardProps) {
   const [expanded, setExpanded] = useState(false);
   const content =
     expanded || review.comment.length <= COLLAPSED_LENGTH
@@ -23,7 +25,13 @@ export function ReviewCard({ review, showCourseMeta = false }: ReviewCardProps) 
       : clampText(review.comment, COLLAPSED_LENGTH);
 
   return (
-    <article className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/5">
+    <article
+      className={cn(
+        variant === "list"
+          ? listDivider
+          : "rounded-md border border-stone-200 bg-white p-5 transition hover:border-orange-200",
+      )}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">

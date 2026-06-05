@@ -28,7 +28,7 @@ export function AdminReviewActions({ review }: AdminReviewActionsProps) {
   }
 
   return (
-    <div className="mt-4 space-y-3 rounded-[24px] bg-stone-50 p-4">
+    <div className="mt-4 space-y-3 rounded-md bg-stone-50 p-4">
       <textarea
         value={remark}
         onChange={(event) => setRemark(event.target.value)}

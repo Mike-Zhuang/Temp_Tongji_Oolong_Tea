@@ -59,7 +59,7 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-[32px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label htmlFor="email" className="text-sm font-semibold text-stone-900">
           同济校园邮箱

@@ -8,6 +8,21 @@ interface SearchBarProps {
   large?: boolean;
 }
 
+function SearchIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-5 w-5 shrink-0 text-orange-500"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+    </svg>
+  );
+}
+
 export function SearchBar({
   initialQuery = "",
   placeholder = "搜索课程名、老师名、课号",
@@ -28,11 +43,11 @@ export function SearchBar({
         搜索课程或老师
       </label>
       <div
-        className={`flex items-center gap-3 rounded-full border border-stone-200 bg-white/95 shadow-lg shadow-orange-950/5 ${
+        className={`flex items-center gap-3 rounded-full border border-stone-200 bg-white shadow-sm ${
           large ? "px-4 py-4 sm:px-6" : "px-4 py-3"
         }`}
       >
-        <span className="text-xl text-orange-500">⌕</span>
+        <SearchIcon />
         <input
           id="site-search"
           value={query}

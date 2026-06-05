@@ -64,7 +64,7 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 rounded-[32px] border border-orange-100 bg-white p-6 shadow-sm shadow-orange-950/5">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="space-y-2 text-sm font-semibold text-stone-900">
           星级评分
@@ -139,7 +139,7 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
           }
           placeholder="尽量写清楚课程内容、上课自由度、考核方式、给分体验、授课质量和你觉得有参考价值的细节。"
           rows={9}
-          className="w-full rounded-[24px] border border-stone-200 px-4 py-3 font-normal leading-7 outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4"
+          className="w-full rounded-md border border-stone-200 px-4 py-3 font-normal leading-7 outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4"
         />
       </label>
       <button

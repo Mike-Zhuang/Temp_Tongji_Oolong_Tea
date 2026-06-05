@@ -10,7 +10,7 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   return (
-    <article className="rounded-[28px] border border-orange-100 bg-white p-5 shadow-sm shadow-orange-950/5">
+    <article className="rounded-md border border-stone-200 bg-white p-5 transition hover:border-orange-200">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -34,8 +34,8 @@ export function CourseCard({ course }: CourseCardProps) {
             </div>
           </div>
         </div>
-        <div className="min-w-28 rounded-3xl bg-orange-50 px-4 py-3 text-right">
-          <p className="text-2xl font-black text-stone-900">{formatRating(course.averageRating)}</p>
+        <div className="min-w-28 rounded-md bg-orange-50 px-4 py-3 text-right">
+          <p className="text-2xl font-bold text-stone-900">{formatRating(course.averageRating)}</p>
           <div className="mt-1 flex justify-end">
             <Stars rating={course.averageRating} size="sm" />
           </div>

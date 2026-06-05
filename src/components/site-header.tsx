@@ -9,13 +9,13 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ user }: SiteHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 border-b border-white/60 bg-[rgba(255,249,244,0.88)] backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-stone-200 bg-[#faf8f5]/95">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <a href="/" className="text-lg font-black tracking-tight text-stone-900">
+          <a href="/" className="text-lg font-bold tracking-tight text-stone-900">
             {SITE_NAME}
           </a>
-          <span className="hidden rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700 sm:inline-flex">
+          <span className="hidden rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700 sm:inline-flex">
             评课替代站
           </span>
         </div>

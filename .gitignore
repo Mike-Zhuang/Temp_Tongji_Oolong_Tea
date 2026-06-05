@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+scripts/visual-qa/screenshots/
 
 # legacy next.js
 /.next/

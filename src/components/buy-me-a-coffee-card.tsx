@@ -2,21 +2,14 @@ import buyMeACoffeeUrl from "../../supabase/storage/site-assets/buy-me-a-coffee.
 
 export function BuyMeACoffeeCard() {
   return (
-    <aside className="rounded-[32px] border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/5">
-      <div className="rounded-[24px] border border-stone-100 bg-stone-50 p-4">
-        <a
-          href={buyMeACoffeeUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="block"
-        >
-          <img
-            src={buyMeACoffeeUrl}
-            alt="Buy me a coffee"
-            className="mx-auto h-auto max-h-[720px] w-full rounded-2xl object-contain"
-          />
-        </a>
-      </div>
+    <aside className="rounded-lg border border-stone-200 bg-white p-5">
+      <a href={buyMeACoffeeUrl} target="_blank" rel="noreferrer" className="block">
+        <img
+          src={buyMeACoffeeUrl}
+          alt="Buy me a coffee"
+          className="mx-auto h-auto max-h-[720px] w-full rounded-md object-contain"
+        />
+      </a>
       <div className="space-y-2 pt-5">
         <h3 className="text-lg font-bold text-stone-900">Buy me a coffee</h3>
         <p className="text-sm leading-7 text-stone-600">
@@ -27,7 +20,7 @@ export function BuyMeACoffeeCard() {
             href={buyMeACoffeeUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700"
+            className="rounded-full border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-50"
           >
             打开原图扫码
           </a>

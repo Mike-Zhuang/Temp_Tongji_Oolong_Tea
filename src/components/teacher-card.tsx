@@ -10,7 +10,7 @@ interface TeacherCardProps {
 
 export function TeacherCard({ teacher }: TeacherCardProps) {
   return (
-    <article className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/5">
+    <article className="rounded-md border border-stone-200 bg-white p-5 transition hover:border-orange-200">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
           <a href={buildTeacherUrl(teacher.slug)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
@@ -25,8 +25,8 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
             共 {teacher.courseCount} 门课，累计 {teacher.reviewCount} 条评论
           </p>
         </div>
-        <div className="rounded-3xl bg-stone-100 px-4 py-3 text-right">
-          <p className="text-2xl font-black text-stone-900">{formatRating(teacher.averageRating)}</p>
+        <div className="rounded-md bg-stone-100 px-4 py-3 text-right">
+          <p className="text-2xl font-bold text-stone-900">{formatRating(teacher.averageRating)}</p>
           <div className="mt-1 flex justify-end">
             <Stars rating={teacher.averageRating} size="sm" />
           </div>

@@ -1,10 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #faf8f5;
   --foreground: #171717;
   --font-sans: "Noto Sans SC", "Source Han Sans SC", "PingFang SC", sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f5f2ed;
+  --color-accent: #ea580c;
+  --color-accent-soft: #fff7ed;
+  --color-border: #e7e5e4;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
 }
 
 @theme inline {
@@ -12,6 +21,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-border: var(--color-border);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 }
 
 * {
@@ -21,8 +38,7 @@
 body {
   min-height: 100vh;
   margin: 0;
-  background: radial-gradient(circle at top, rgba(255, 194, 137, 0.24), transparent 32%),
-    linear-gradient(180deg, #fffaf5 0%, #fffdf9 45%, #fff8ef 100%);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
 }
@@ -33,18 +49,4 @@ a {
 
 ::selection {
   background: rgba(251, 146, 60, 0.22);
-}
-
-.noise-panel {
-  position: relative;
-}
-
-.noise-panel::before {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(120, 53, 15, 0.05) 0.7px, transparent 0.7px);
-  background-size: 14px 14px;
-  content: "";
-  opacity: 0.35;
-  pointer-events: none;
 }
