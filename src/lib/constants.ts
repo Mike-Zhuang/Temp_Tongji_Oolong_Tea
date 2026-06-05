@@ -7,6 +7,8 @@ export const SITE_DESCRIPTION =
 
 export const ACKNOWLEDGEMENT_LINK = "https://1.tongji.icu";
 
+export const GITHUB_REPO_LINK = "https://github.com/Mike-Zhuang/Temp_Tongji_Oolong_Tea";
+
 export const ICP_FILING_NUMBER = "沪ICP备2026015123号";
 
 export const ICP_FILING_LINK = "https://beian.miit.gov.cn/";

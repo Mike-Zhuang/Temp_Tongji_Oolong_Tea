@@ -1,4 +1,4 @@
-import { ACKNOWLEDGEMENT_LINK, ICP_FILING_LINK, ICP_FILING_NUMBER, SITE_NAME } from "@/lib/constants";
+import { ACKNOWLEDGEMENT_LINK, GITHUB_REPO_LINK, ICP_FILING_LINK, ICP_FILING_NUMBER, SITE_NAME } from "@/lib/constants";
 
 export function SiteFooter() {
   return (
@@ -6,6 +6,12 @@ export function SiteFooter() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-8 text-sm text-stone-600 sm:px-6 lg:px-8">
         <p className="font-semibold text-stone-900">{SITE_NAME}</p>
         <p>致谢 <a className="text-orange-600 underline-offset-4 hover:underline" href={ACKNOWLEDGEMENT_LINK} target="_blank" rel="noreferrer">1.tongji.icu</a></p>
+        <p>
+          源码仓库{" "}
+          <a className="text-orange-600 underline-offset-4 hover:underline" href={GITHUB_REPO_LINK} target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+        </p>
         <p>仅用于学习交流与课程体验参考，请理性辨别信息。</p>
         <div className="flex flex-wrap gap-4">
           <a href="/search" className="hover:text-stone-900">

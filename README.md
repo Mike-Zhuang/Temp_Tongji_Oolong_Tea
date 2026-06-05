@@ -1,5 +1,7 @@
 # 同济大学乌龙茶替代品
 
+源码仓库：[https://github.com/Mike-Zhuang/Temp_Tongji_Oolong_Tea](https://github.com/Mike-Zhuang/Temp_Tongji_Oolong_Tea)
+
 基于 `Vite + React + TypeScript + Tailwind CSS + Supabase` 的静态评课网站，支持：
 
 - 按课程名、老师名、课号统一搜索
