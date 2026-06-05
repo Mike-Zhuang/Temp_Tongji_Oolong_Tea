@@ -80,6 +80,29 @@ health_check() {
   return 1
 }
 
+wait_for_other_next_builds() {
+  local current_pid
+  current_pid="$$"
+
+  for _ in {1..60}; do
+    local other_count
+    other_count="$(ps -eo pid=,args= | awk -v current_pid="$current_pid" '
+      /next build/ && $1 != current_pid { count++ }
+      END { print count + 0 }
+    ')"
+
+    if [[ "$other_count" == "0" ]]; then
+      return 0
+    fi
+
+    echo "[tongji-oolong-tea-sync] another next build is in progress, wait 2s"
+    sleep 2
+  done
+
+  echo "[tongji-oolong-tea-sync] timeout waiting for existing next build to finish"
+  return 1
+}
+
 is_pm2_online() {
   local status
   status="$(pm2 jlist 2>/dev/null | node -e '
@@ -130,6 +153,7 @@ ensure_runtime_env
 ensure_pm2
 
 if [[ "$NEEDS_BUILD" -eq 1 ]]; then
+  wait_for_other_next_builds
   install_dependencies
   npm run build
 fi
