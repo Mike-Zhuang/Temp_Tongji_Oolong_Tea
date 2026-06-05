@@ -19,7 +19,6 @@ export default function AuthPage() {
         <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
           <li>先把发评论的门槛限定在同济校园邮箱，能显著减少灌水和恶意内容。</li>
           <li>登录后评论会直接公开，管理员主要处理被举报内容，不提前卡审核。</li>
-          <li>邮件 SMTP 配置通过环境变量注入，仓库里不会保存实际凭据。</li>
         </ul>
       </section>
     </div>
