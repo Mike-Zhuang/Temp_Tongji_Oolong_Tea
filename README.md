@@ -1,6 +1,6 @@
 # 同济大学乌龙茶替代品
 
-基于 `Next.js App Router + TypeScript + Tailwind CSS + Supabase` 的评课网站，支持：
+基于 `Vite + React + TypeScript + Tailwind CSS + Supabase` 的静态评课网站，支持：
 
 - 按课程名、老师名、课号统一搜索
 - 老师页查看名下全部课程
@@ -28,7 +28,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-没有配置 Supabase 时，网站仍可读取本地种子数据进行浏览；但登录、发评论、举报、后台管理会提示未配置。
+没有配置 Supabase 时，网站会给出明确提示；课程、评论、登录和后台都依赖 Supabase 数据表与 RLS。
 
 ## 数据位置
 
@@ -50,7 +50,10 @@ npm run import:seed
 
 - 前端限制只允许 `@tongji.edu.cn` 邮箱
 - 登录方式使用 Supabase OTP 邮件链接
-- 邮件 SMTP 请在 Supabase 后台配置，不要把凭据提交进仓库
+- Supabase Auth URL Configuration 建议填写：
+  - Site URL: `https://1.mikezhuang.cn`
+  - Redirect URLs: `https://1.mikezhuang.cn/auth/callback`
+  - 本地开发可额外添加：`http://localhost:5173/auth/callback`
 
 ## 管理员
 
@@ -61,3 +64,10 @@ tjpush_admin@mikezhuang.cn
 ```
 
 使用该邮箱登录后可以访问 `/admin`。
+
+## 静态部署
+
+- 构建命令：`npm run build`
+- 静态产物目录：`dist`
+- 宝塔/Nginx 站点根目录可指向 `dist` 发布后的目录，例如 `/www/wwwroot/1.mikezhuang.cn`
+- `deploy/sync-deploy.sh` 会自动拉取仓库、构建静态产物、发布到站点目录，并停止旧的 PM2 Next 进程

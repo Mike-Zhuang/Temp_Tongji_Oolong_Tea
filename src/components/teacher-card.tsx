@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { TeacherSummary } from "@/lib/types";
 import { buildTeacherUrl, formatDateTime, formatRating } from "@/lib/utils";
 
@@ -15,9 +13,9 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
     <article className="rounded-[28px] border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
-          <Link href={buildTeacherUrl(teacher.slug)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
+          <a href={buildTeacherUrl(teacher.slug)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
             {teacher.name}
-          </Link>
+          </a>
           <div className="flex flex-wrap gap-2">
             {teacher.departmentHints.slice(0, 3).map((department) => (
               <InfoPill key={department}>{department}</InfoPill>

@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { startTransition, useState } from "react";
+import { useState } from "react";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { UserProfile } from "@/lib/types";
 
 interface AuthStatusProps {
@@ -12,7 +10,6 @@ interface AuthStatusProps {
 }
 
 export function AuthStatus({ user }: AuthStatusProps) {
-  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
   async function handleSignOut() {
@@ -23,22 +20,19 @@ export function AuthStatus({ user }: AuthStatusProps) {
 
     setIsPending(true);
     await supabase.auth.signOut();
-    startTransition(() => {
-      router.refresh();
-      router.push("/");
-    });
+    window.location.href = "/";
     setIsPending(false);
   }
 
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <Link
+        <a
           href="/auth"
           className="rounded-full border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-stone-900 hover:text-stone-900"
         >
           校园邮箱登录
-        </Link>
+        </a>
       </div>
     );
   }

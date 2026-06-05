@@ -1,17 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ADMIN_EMAIL } from "@/lib/constants";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { createSupabaseBrowserClient, getSiteUrl } from "@/lib/supabase/client";
 
 interface LoginFormProps {
   isEnabled: boolean;
 }
 
 export function LoginForm({ isEnabled }: LoginFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,11 +41,10 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
 
     setIsSubmitting(true);
 
-    const origin = window.location.origin;
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${origin}/auth/callback`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
       },
     });
 
@@ -59,7 +56,6 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
     }
 
     setMessage("登录链接已经发送到你的校园邮箱，请查收后返回本站。");
-    router.refresh();
   }
 
   return (

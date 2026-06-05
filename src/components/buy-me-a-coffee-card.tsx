@@ -1,22 +1,19 @@
-import Image from "next/image";
+import buyMeACoffeeUrl from "../../supabase/storage/site-assets/buy-me-a-coffee.jpg";
 
 export function BuyMeACoffeeCard() {
   return (
     <aside className="rounded-[32px] border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/5">
       <div className="rounded-[24px] border border-stone-100 bg-stone-50 p-4">
         <a
-          href="/api/site-assets/buy-me-a-coffee"
+          href={buyMeACoffeeUrl}
           target="_blank"
           rel="noreferrer"
           className="block"
         >
-          <Image
-            src="/api/site-assets/buy-me-a-coffee"
+          <img
+            src={buyMeACoffeeUrl}
             alt="Buy me a coffee"
-            width={1200}
-            height={900}
-            unoptimized
-            className="mx-auto h-auto w-full rounded-2xl object-contain"
+            className="mx-auto h-auto max-h-[720px] w-full rounded-2xl object-contain"
           />
         </a>
       </div>
@@ -27,7 +24,7 @@ export function BuyMeACoffeeCard() {
         </p>
         <div className="flex flex-wrap gap-3 pt-1">
           <a
-            href="/api/site-assets/buy-me-a-coffee"
+            href={buyMeACoffeeUrl}
             target="_blank"
             rel="noreferrer"
             className="rounded-full bg-stone-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-stone-700"

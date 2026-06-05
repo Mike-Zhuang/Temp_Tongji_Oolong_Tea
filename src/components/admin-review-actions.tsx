@@ -1,8 +1,6 @@
-"use client";
-
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { updateAdminReview } from "@/lib/data-client";
 import type { PublishStatus, Review } from "@/lib/types";
 
 interface AdminReviewActionsProps {
@@ -10,28 +8,22 @@ interface AdminReviewActionsProps {
 }
 
 export function AdminReviewActions({ review }: AdminReviewActionsProps) {
-  const router = useRouter();
   const [remark, setRemark] = useState(review.moderatorRemark ?? "");
   const [message, setMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
 
   async function updateReview(publishStatus?: PublishStatus) {
     setIsPending(true);
-    const response = await fetch(`/api/admin/reviews/${review.id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      await updateAdminReview(review.id, {
         publishStatus,
         moderatorRemark: remark,
-      }),
-    });
-    const result = (await response.json()) as { message?: string };
-    setIsPending(false);
-    setMessage(result.message ?? (response.ok ? "已更新" : "更新失败"));
-    if (response.ok) {
-      router.refresh();
+      });
+      setMessage("已更新，刷新后可看到最新列表。");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "更新失败");
+    } finally {
+      setIsPending(false);
     }
   }
 

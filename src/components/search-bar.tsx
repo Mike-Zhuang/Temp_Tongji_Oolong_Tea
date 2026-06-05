@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { startTransition, useState } from "react";
+import { useState } from "react";
 
 interface SearchBarProps {
   initialQuery?: string;
@@ -14,16 +13,13 @@ export function SearchBar({
   placeholder = "搜索课程名、老师名、课号",
   large = false,
 }: SearchBarProps) {
-  const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextQuery = query.trim();
 
-    startTransition(() => {
-      router.push(nextQuery ? `/search?q=${encodeURIComponent(nextQuery)}` : "/search");
-    });
+    window.location.href = nextQuery ? `/search?q=${encodeURIComponent(nextQuery)}` : "/search";
   }
 
   return (

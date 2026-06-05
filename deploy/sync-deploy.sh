@@ -2,7 +2,9 @@
 set -euo pipefail
 
 APP_DIR=/opt/tongji-oolong-tea
+SITE_ROOT=/www/wwwroot/1.mikezhuang.cn
 APP_NAME=tongji-oolong-tea
+DOMAIN=1.mikezhuang.cn
 MAIN_REF=refs/heads/main
 LOCK_FILE=/tmp/tongji-oolong-tea-sync.lock
 NPM_REGISTRY=https://registry.npmmirror.com
@@ -33,21 +35,21 @@ ensure_runtime_env() {
 
   if [[ ! -f "$APP_DIR/.env.production.local" ]]; then
     cat > "$APP_DIR/.env.production.local" <<'ENVEOF'
-NEXT_PUBLIC_SITE_URL=https://1.mikezhuang.cn
+VITE_SITE_URL=https://1.mikezhuang.cn
 ENVEOF
     chmod 640 "$APP_DIR/.env.production.local"
   fi
-}
 
-ensure_pm2() {
-  if ! command -v pm2 >/dev/null 2>&1; then
-    npm install -g pm2
+  if grep -q '^NEXT_PUBLIC_SITE_URL=' "$APP_DIR/.env.production.local" && ! grep -q '^VITE_SITE_URL=' "$APP_DIR/.env.production.local"; then
+    sed -n 's/^NEXT_PUBLIC_SITE_URL=/VITE_SITE_URL=/p' "$APP_DIR/.env.production.local" >> "$APP_DIR/.env.production.local"
   fi
 
-  local npm_global_bin
-  npm_global_bin="$(npm prefix -g)/bin"
-  if [[ ":$PATH:" != *":$npm_global_bin:"* ]]; then
-    export PATH="$npm_global_bin:$PATH"
+  if grep -q '^NEXT_PUBLIC_SUPABASE_URL=' "$APP_DIR/.env.production.local" && ! grep -q '^VITE_SUPABASE_URL=' "$APP_DIR/.env.production.local"; then
+    sed -n 's/^NEXT_PUBLIC_SUPABASE_URL=/VITE_SUPABASE_URL=/p' "$APP_DIR/.env.production.local" >> "$APP_DIR/.env.production.local"
+  fi
+
+  if grep -q '^NEXT_PUBLIC_SUPABASE_ANON_KEY=' "$APP_DIR/.env.production.local" && ! grep -q '^VITE_SUPABASE_ANON_KEY=' "$APP_DIR/.env.production.local"; then
+    sed -n 's/^NEXT_PUBLIC_SUPABASE_ANON_KEY=/VITE_SUPABASE_ANON_KEY=/p' "$APP_DIR/.env.production.local" >> "$APP_DIR/.env.production.local"
   fi
 }
 
@@ -70,56 +72,58 @@ reload_nginx_if_possible() {
   /www/server/nginx/sbin/nginx -s reload >/dev/null 2>&1 || nginx -s reload >/dev/null 2>&1 || true
 }
 
-health_check() {
-  for i in {1..30}; do
-    if curl -fsS http://127.0.0.1:3107/api/health >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 1
-  done
-  return 1
+stop_pm2_if_possible() {
+  if command -v pm2 >/dev/null 2>&1 && pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+    pm2 delete "$APP_NAME" >/dev/null || true
+    pm2 save >/dev/null || true
+    echo "[tongji-oolong-tea-sync] stopped old pm2 app $APP_NAME"
+  fi
 }
 
-wait_for_other_next_builds() {
-  local current_pid
-  current_pid="$$"
+publish_static_files() {
+  install -d -m 755 "$SITE_ROOT"
+  find "$SITE_ROOT" -mindepth 1 -maxdepth 1 \
+    ! -name ".user.ini" \
+    ! -name ".well-known" \
+    -exec rm -rf {} +
 
-  for _ in {1..60}; do
-    local other_count
-    other_count="$(ps -eo pid=,args= | awk -v current_pid="$current_pid" '
-      /next build/ && $1 != current_pid { count++ }
-      END { print count + 0 }
-    ')"
-
-    if [[ "$other_count" == "0" ]]; then
-      return 0
-    fi
-
-    echo "[tongji-oolong-tea-sync] another next build is in progress, wait 2s"
-    sleep 2
-  done
-
-  echo "[tongji-oolong-tea-sync] timeout waiting for existing next build to finish"
-  return 1
+  cp -a "$APP_DIR/dist/." "$SITE_ROOT/"
+  echo "[tongji-oolong-tea-sync] static files published to $SITE_ROOT"
 }
 
-is_pm2_online() {
-  local status
-  status="$(pm2 jlist 2>/dev/null | node -e '
-    const chunks = [];
-    process.stdin.on("data", (c) => chunks.push(c));
-    process.stdin.on("end", () => {
-      try {
-        const apps = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-        const app = apps.find((item) => item.name === process.argv[1]);
-        process.stdout.write(app?.pm2_env?.status || "");
-      } catch {
-        process.stdout.write("");
-      }
-    });
-  ' "$APP_NAME")"
+ensure_nginx_static_site() {
+  local nginx_conf="/www/server/panel/vhost/nginx/${DOMAIN}.conf"
+  if [[ ! -f "$nginx_conf" ]]; then
+    echo "[tongji-oolong-tea-sync] nginx conf not found, skip auto static rewrite: $nginx_conf"
+    return 0
+  fi
 
-  [[ "$status" == "online" ]]
+  if grep -q "proxy_pass http://127.0.0.1:3107" "$nginx_conf"; then
+    cp "$nginx_conf" "${nginx_conf}.bak.$(date +%Y%m%d%H%M%S)"
+    python3 - "$nginx_conf" "$SITE_ROOT" <<'PYEOF'
+from pathlib import Path
+import re
+import sys
+
+conf_path = Path(sys.argv[1])
+site_root = sys.argv[2]
+text = conf_path.read_text()
+replacement = f"""location / {{
+        root {site_root};
+        try_files $uri $uri/ /index.html;
+        index index.html;
+    }}"""
+text = re.sub(
+    r"location\s*/\s*\{[^{}]*proxy_pass\s+http://127\.0\.0\.1:3107/?;[^{}]*\}",
+    replacement,
+    text,
+    count=1,
+    flags=re.S,
+)
+conf_path.write_text(text)
+PYEOF
+    echo "[tongji-oolong-tea-sync] nginx reverse proxy replaced by static root"
+  fi
 }
 
 picked=$(pick_source) || { echo "[tongji-oolong-tea-sync] no reachable gitproxy source"; exit 1; }
@@ -140,45 +144,26 @@ FETCH_HASH=$(git rev-parse origin/main)
 
 git reset --hard HEAD >/dev/null 2>&1 || true
 git clean -fd >/dev/null 2>&1 || true
-
-NEEDS_BUILD=1
-if [[ "$LOCAL_HASH" == "$FETCH_HASH" && -d "$APP_DIR/.next" ]]; then
-  NEEDS_BUILD=0
-  echo "[tongji-oolong-tea-sync] no code update, reuse existing build"
-fi
-
 git checkout -B main origin/main
 git reset --hard origin/main
+
 ensure_runtime_env
-ensure_pm2
+
+NEEDS_BUILD=1
+if [[ "$LOCAL_HASH" == "$FETCH_HASH" && -f "$SITE_ROOT/index.html" && -d "$APP_DIR/dist" ]]; then
+  NEEDS_BUILD=0
+  echo "[tongji-oolong-tea-sync] no code update, reuse existing static build"
+fi
 
 if [[ "$NEEDS_BUILD" -eq 1 ]]; then
-  wait_for_other_next_builds
+  rm -rf .next dist
   install_dependencies
   npm run build
 fi
 
-if [[ "$NEEDS_BUILD" -eq 1 ]]; then
-  pm2 startOrReload ecosystem.config.cjs --update-env
-  pm2 save >/dev/null
-else
-  if is_pm2_online && health_check; then
-    echo "[tongji-oolong-tea-sync] app already online, skip reload"
-    echo "[tongji-oolong-tea-sync] deployed $FETCH_HASH"
-    exit 0
-  fi
-
-  echo "[tongji-oolong-tea-sync] app not healthy, restart pm2 process"
-  pm2 startOrReload ecosystem.config.cjs --update-env
-  pm2 save >/dev/null
-fi
-
-if ! health_check; then
-  echo "[tongji-oolong-tea-sync] health check failed"
-  pm2 logs "$APP_NAME" --lines 80 --nostream || true
-  exit 1
-fi
-
+publish_static_files
+stop_pm2_if_possible
+ensure_nginx_static_site
 reload_nginx_if_possible
 
 echo "[tongji-oolong-tea-sync] deployed $FETCH_HASH"

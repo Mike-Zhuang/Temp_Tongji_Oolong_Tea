@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { reportReview } from "@/lib/data-client";
+
 interface ReportReviewButtonProps {
   reviewId: string;
 }
@@ -17,16 +19,14 @@ export function ReportReviewButton({ reviewId }: ReportReviewButtonProps) {
     }
 
     setIsSubmitting(true);
-    const response = await fetch(`/api/reviews/${reviewId}/report`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ reason }),
-    });
-    const result = (await response.json()) as { message?: string };
-    setIsSubmitting(false);
-    setMessage(result.message ?? (response.ok ? "举报已提交" : "举报失败"));
+    try {
+      await reportReview(reviewId, reason);
+      setMessage("举报已提交");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "举报失败");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

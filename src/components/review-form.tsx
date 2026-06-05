@@ -1,16 +1,15 @@
-"use client";
-
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { REVIEW_TAG_OPTIONS } from "@/lib/constants";
+import { createUserReview, invalidateDataCache } from "@/lib/data-client";
+import type { Course, UserProfile } from "@/lib/types";
 
 interface ReviewFormProps {
-  courseId: number;
+  course: Course;
+  user: UserProfile;
 }
 
-export function ReviewForm({ courseId }: ReviewFormProps) {
-  const router = useRouter();
+export function ReviewForm({ course, user }: ReviewFormProps) {
   const [formState, setFormState] = useState({
     rating: 5,
     semester: "",
@@ -33,37 +32,35 @@ export function ReviewForm({ courseId }: ReviewFormProps) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
-    setIsSubmitting(true);
 
-    const response = await fetch("/api/reviews", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        courseId,
-        ...formState,
-      }),
-    });
-
-    const result = (await response.json()) as { message?: string };
-    setIsSubmitting(false);
-
-    if (!response.ok) {
-      setMessage(result.message ?? "评论提交失败。");
+    if (!formState.semester.trim() || formState.comment.trim().length < 10) {
+      setMessage("请补充学期，并至少写 10 个字的评论正文。");
       return;
     }
 
-    setMessage("评论已发布，现在已经可以在课程页看到。");
-    setFormState({
-      rating: 5,
-      semester: "",
-      score: "",
-      comment: "",
-      tags: [],
-    });
-    router.push(`/course/${courseId}`);
-    router.refresh();
+    setIsSubmitting(true);
+
+    try {
+      await createUserReview({
+        courseId: course.id,
+        courseCode: course.code,
+        courseName: course.name,
+        teacherName: course.teacherName,
+        teacherSlug: course.teacherSlug,
+        userId: user.id,
+        ...formState,
+        semester: formState.semester.trim(),
+        score: formState.score.trim(),
+        comment: formState.comment.trim(),
+      });
+      invalidateDataCache();
+      setMessage("评论已发布，现在已经可以在课程页看到。");
+      window.location.href = `/course/${course.id}`;
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "评论提交失败。");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (

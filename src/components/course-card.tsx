@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { Course } from "@/lib/types";
 import { buildCourseUrl, buildTeacherUrl, formatDateTime, formatRating } from "@/lib/utils";
 
@@ -22,13 +20,13 @@ export function CourseCard({ course }: CourseCardProps) {
             ))}
           </div>
           <div>
-            <Link href={buildCourseUrl(course.id)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
+            <a href={buildCourseUrl(course.id)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
               {course.name}
-            </Link>
+            </a>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-stone-500">
-              <Link href={buildTeacherUrl(course.teacherSlug)} className="font-medium text-stone-700 hover:text-orange-600">
+              <a href={buildTeacherUrl(course.teacherSlug)} className="font-medium text-stone-700 hover:text-orange-600">
                 {course.teacherName}
-              </Link>
+              </a>
               <span>·</span>
               <span>{course.department ?? "院系暂缺"}</span>
               <span>·</span>
