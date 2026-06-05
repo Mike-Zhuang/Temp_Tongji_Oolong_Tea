@@ -5,7 +5,11 @@ import { useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-export function LoginForm() {
+interface LoginFormProps {
+  isEnabled: boolean;
+}
+
+export function LoginForm({ isEnabled }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -15,6 +19,11 @@ export function LoginForm() {
     event.preventDefault();
     setMessage("");
 
+    if (!isEnabled) {
+      setMessage("登录功能暂未开放，站长正在补全配置。");
+      return;
+    }
+
     if (!email.trim().toLowerCase().endsWith("@tongji.edu.cn")) {
       setMessage("只允许使用 @tongji.edu.cn 校园邮箱登录。");
       return;
@@ -22,7 +31,7 @@ export function LoginForm() {
 
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
-      setMessage("当前环境还没有配置 Supabase，请先补充环境变量。");
+      setMessage("登录功能暂未开放，请稍后再试。");
       return;
     }
 
@@ -59,15 +68,16 @@ export function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="example@tongji.edu.cn"
-          className="w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4"
+          disabled={!isEnabled}
+          className="w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
         />
       </div>
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !isEnabled}
         className="w-full rounded-full bg-stone-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "发送中..." : "发送登录链接"}
+        {!isEnabled ? "登录功能暂未开放" : isSubmitting ? "发送中..." : "发送登录链接"}
       </button>
       {message ? <p className="text-sm text-stone-600">{message}</p> : null}
     </form>
