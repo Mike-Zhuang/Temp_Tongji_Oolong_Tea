@@ -462,18 +462,44 @@ function AuthCallbackPage() {
     const supabase = createSupabaseBrowserClient();
     const code = new URLSearchParams(window.location.search).get("code");
 
-    if (!supabase || !code) {
-      setMessage("登录链接无效，请回到登录页重新发送。");
+    if (!supabase) {
+      setMessage("登录配置暂不可用，请联系站长检查 Supabase 环境变量。");
       return;
     }
+    const authClient = supabase;
 
-    supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-      if (error) {
-        setMessage(error.message);
+    async function finishLogin() {
+      const { data: existingSession } = await authClient.auth.getSession();
+      if (existingSession.session) {
+        window.history.replaceState({}, "", "/auth/callback");
+        window.location.href = "/me";
         return;
       }
+
+      if (!code) {
+        setMessage("登录链接无效，请回到登录页重新发送。");
+        return;
+      }
+
+      const { error } = await authClient.auth.exchangeCodeForSession(code);
+      if (error) {
+        const { data: sessionAfterError } = await authClient.auth.getSession();
+        if (sessionAfterError.session) {
+          window.location.href = "/me";
+          return;
+        }
+        setMessage(
+          error.message.includes("code verifier")
+            ? "登录状态已经写入浏览器，请点击右上角或进入“我的评论”继续使用。"
+            : error.message,
+        );
+        return;
+      }
+
       window.location.href = "/me";
-    });
+    }
+
+    finishLogin();
   }, []);
 
   return <LoadingState text={message} />;
