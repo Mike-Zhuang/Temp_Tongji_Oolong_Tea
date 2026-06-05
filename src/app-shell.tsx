@@ -186,7 +186,7 @@ function HomePage() {
   return (
     <div className="pb-16">
       <section className="overflow-hidden">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-16">
+        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start lg:px-8 lg:py-16">
           <div className="space-y-6">
             <div>
               <p className="text-xs font-medium text-orange-600">同济课程雷达</p>
@@ -208,28 +208,48 @@ function HomePage() {
                 { label: "分类", value: data.siteStats.categoryCount.toString() },
               ]}
             />
+            <div className="flex flex-wrap gap-2">
+              <a href="/search" className="rounded-full bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-200">
+                开始搜索
+              </a>
+              <a href="#top-teachers" className="rounded-full bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-200">
+                看高分教师
+              </a>
+              <a href="#featured-courses" className="rounded-full bg-stone-100 px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-200">
+                热门课程
+              </a>
+            </div>
           </div>
-          <div className="space-y-6">
-            <PageSection>
-              <SectionTitle
-                eyebrow="新鲜热评"
-                title="最近大家在说什么"
-                description="首屏先把最近有讨论的课程摆出来，方便快速捞到当学期活跃评价。"
-              />
-              <div className="mt-5">
-                {data.latestReviews.slice(0, 3).map((review) => (
-                  <ReviewCard key={review.id} review={review} showCourseMeta />
-                ))}
-              </div>
-            </PageSection>
-            <BuyMeACoffeeCard />
-          </div>
+          <PageSection className="lg:max-h-[min(520px,70vh)] lg:overflow-y-auto">
+            <SectionTitle
+              eyebrow="新鲜热评"
+              title="最近大家在说什么"
+              description="首屏先把最近有讨论的课程摆出来，方便快速捞到当学期活跃评价。"
+            />
+            <div className="mt-5">
+              {data.latestReviews.length ? (
+                data.latestReviews.slice(0, 2).map((review) => (
+                  <ReviewCard key={review.id} review={review} showCourseMeta variant="preview" />
+                ))
+              ) : (
+                <EmptyState text="暂时还没有最新评论，先去搜索课程看看吧。" actionHref="/search" actionLabel="去搜索" />
+              )}
+            </div>
+            {data.latestReviews.length ? (
+              <a href="/search?sort=recent" className="mt-4 inline-flex text-sm font-semibold text-orange-600 hover:text-orange-700">
+                查看更多热评 →
+              </a>
+            ) : null}
+          </PageSection>
+        </div>
+        <div className="mx-auto mt-10 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <BuyMeACoffeeCard compact />
         </div>
       </section>
-      <CardSection eyebrow="热门课程" title="评论最多的课程" description="优先展示评论量高的课程，方便你快速找到信息密度最高的入口。">
+      <CardSection id="featured-courses" eyebrow="热门课程" title="评论最多的课程" description="优先展示评论量高的课程，方便你快速找到信息密度最高的入口。">
         {data.featuredCourses.map((course) => <CourseCard key={course.id} course={course} />)}
       </CardSection>
-      <CardSection eyebrow="高分教师" title="口碑最稳的一批老师" description="这里会优先综合平均分和评论量，避免只靠一两条样本冲榜。" gridClassName="lg:grid-cols-3">
+      <CardSection id="top-teachers" eyebrow="高分教师" title="口碑最稳的一批老师" description="这里会优先综合平均分和评论量，避免只靠一两条样本冲榜。" gridClassName="lg:grid-cols-3">
         {data.topTeachers.map((teacher) => <TeacherCard key={teacher.slug} teacher={teacher} />)}
       </CardSection>
       <CardSection eyebrow="避雷参考" title="低分且样本不算少的课程" description="低分不一定代表课程差，但至少说明分歧明显，建议点进去先看评论再决定。">
@@ -269,11 +289,11 @@ function SearchPage({ query, sort }: { query: string; sort: SearchSort }) {
       <div className="mt-10 grid gap-10 lg:grid-cols-[0.95fr_1.05fr]">
         <section className="space-y-5">
           <SectionTitle eyebrow="老师结果" title={`匹配到 ${data.teachers.length} 位老师`} />
-          {data.teachers.length ? data.teachers.map((teacher) => <TeacherCard key={teacher.slug} teacher={teacher} />) : <EmptyState text="没有找到匹配的老师，试试课程名、课号或者更短一点的关键词。" />}
+          {data.teachers.length ? data.teachers.map((teacher) => <TeacherCard key={teacher.slug} teacher={teacher} />) : <EmptyState text="没有找到匹配的老师，试试课程名、课号或者更短一点的关键词。" actionHref="/search" actionLabel="重新搜索" />}
         </section>
         <section className="space-y-5">
           <SectionTitle eyebrow="课程结果" title={`匹配到 ${data.courses.length} 门课程`} />
-          {data.courses.length ? data.courses.map((course) => <CourseCard key={course.id} course={course} />) : <EmptyState text="没有找到匹配的课程，换一个老师名或删掉部分关键词再试试。" />}
+          {data.courses.length ? data.courses.map((course) => <CourseCard key={course.id} course={course} />) : <EmptyState text="没有找到匹配的课程，换一个老师名或删掉部分关键词再试试。" actionHref="/search" actionLabel="重新搜索" />}
         </section>
       </div>
     </div>
@@ -369,7 +389,7 @@ function CoursePage({ courseId, sort }: { courseId: number; sort: ReviewSort }) 
                 {course.categories.map((category) => <Pill key={category}>{category}</Pill>)}
               </div>
             </div>
-            <div className="min-w-52 border-l-4 border-orange-500 pl-5">
+            <div className="hidden min-w-52 border-l-4 border-orange-500 pl-5 lg:block">
               <p className="text-sm text-stone-500">课程总评分</p>
               <p className="mt-2 text-4xl font-bold text-stone-900">{formatRating(course.averageRating)}</p>
               <div className="mt-3"><Stars rating={course.averageRating} /></div>
@@ -378,6 +398,9 @@ function CoursePage({ courseId, sort }: { courseId: number; sort: ReviewSort }) 
             </div>
           </div>
         </PageSection>
+        <div className="lg:hidden">
+          <CourseRatingSummary course={course} showWriteLink />
+        </div>
         <PageSection>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <SectionTitle
@@ -544,8 +567,8 @@ function MePage({ user }: { user: UserProfile | null }) {
       <PageSection>
         <SectionTitle eyebrow="我的评论" title="你发布过的历史记录" description="这里会列出你所有站内新增评论，方便回看和后续补充。" />
       </PageSection>
-      <div className="mt-8 rounded-lg border border-stone-200 bg-white px-6">
-        {data?.length ? data.map((review) => <ReviewCard key={review.id} review={review} showCourseMeta />) : <EmptyState text="你还没有发布过站内评论。先去搜索课程，再补上一条真实体验吧。" />}
+      <div className="mt-8">
+        {data?.length ? data.map((review) => <ReviewCard key={review.id} review={review} showCourseMeta />) : <EmptyState text="你还没有发布过站内评论。先去搜索课程，再补上一条真实体验吧。" actionHref="/search" actionLabel="去搜索" />}
       </div>
     </div>
   );
@@ -572,8 +595,8 @@ function AdminPage({ user }: { user: UserProfile | null }) {
       <PageSection>
         <SectionTitle eyebrow="管理后台" title="最新评论与举报处理" description="这里可以查看站内评论、被举报记录数、当前公开状态，并支持隐藏/恢复评论或补充管理员备注。" />
       </PageSection>
-      <div className="mt-8 rounded-lg border border-stone-200 bg-white px-6">
-        {data?.map((review) => (
+      <div className="mt-8">
+        {data?.length ? data.map((review) => (
           <div key={review.id}>
             <ReviewCard review={review} showCourseMeta />
             <div className="border-t border-stone-200 pb-5 pt-4">
@@ -585,7 +608,7 @@ function AdminPage({ user }: { user: UserProfile | null }) {
               <AdminReviewActions review={review} />
             </div>
           </div>
-        ))}
+        )) : <EmptyState text="暂无待处理评论。" />}
       </div>
     </div>
   );
@@ -602,9 +625,12 @@ function CourseSidebar({ course }: { course: Course }) {
             <li>再看最近活跃时间，避免把很老的口碑直接套用到现在。</li>
             <li>如果成绩原文很分裂，优先看评论正文里的考核和给分细节。</li>
           </ul>
-          <Button href={`/write-review/${course.id}`} variant="secondary" className="mt-5">
+          <a
+            href={`/write-review/${course.id}`}
+            className="mt-5 inline-flex text-sm font-semibold text-orange-600 transition hover:text-orange-700"
+          >
             我也写一条评论
-          </Button>
+          </a>
         </div>
         <div className="p-6">
           <h2 className="text-lg font-bold text-stone-900">评分分布</h2>
@@ -631,10 +657,23 @@ function CourseSidebar({ course }: { course: Course }) {
   );
 }
 
-function EmptyState({ text }: { text: string }) {
+function EmptyState({
+  text,
+  actionHref,
+  actionLabel,
+}: {
+  text: string;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
   return (
     <div className="rounded-md bg-stone-50 p-6 text-center text-sm leading-7 text-stone-500">
-      {text}
+      <p>{text}</p>
+      {actionHref && actionLabel ? (
+        <div className="mt-4">
+          <Button href={actionHref}>{actionLabel}</Button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -644,7 +683,7 @@ function LoginRequired() {
     <div className="rounded-md bg-stone-50 p-6 text-sm leading-7 text-stone-600">
       你还没有登录。请先使用 <span className="font-semibold">@tongji.edu.cn</span> 校园邮箱登录，再回来发布评论。
       <div className="mt-5">
-        <Button href="/auth" variant="secondary">去登录</Button>
+        <Button href="/auth">去登录</Button>
       </div>
     </div>
   );
@@ -658,8 +697,40 @@ function LoginPrompt({ title, description, tone = "warm" }: { title: string; des
       </p>
       <h1 className="mt-6 text-4xl font-bold tracking-tight text-stone-900">{title}</h1>
       <p className="mt-4 text-sm leading-7 text-stone-600">{description}</p>
-      <Button href="/auth" variant="secondary" className="mt-8">去登录</Button>
+      <Button href="/auth" className="mt-8">去登录</Button>
     </div>
+  );
+}
+
+function CourseRatingSummary({ course, showWriteLink = false }: { course: Course; showWriteLink?: boolean }) {
+  return (
+    <PageSection>
+      <div className="border-l-4 border-orange-500 pl-5">
+        <p className="text-sm text-stone-500">课程总评分</p>
+        <p className="mt-2 text-4xl font-bold text-stone-900">{formatRating(course.averageRating)}</p>
+        <div className="mt-3"><Stars rating={course.averageRating} /></div>
+        <p className="mt-3 text-sm text-stone-500">{course.reviewCount} 条评论</p>
+      </div>
+      <div className="mt-5 space-y-3">
+        {course.ratingDistribution.map((item) => {
+          const percentage = course.reviewCount > 0 ? Math.round((item.count / course.reviewCount) * 100) : 0;
+          return (
+            <div key={item.stars} className="space-y-1">
+              <div className="flex items-center justify-between text-sm text-stone-600">
+                <span>{item.stars} 星</span>
+                <span>{item.count} 条 · {percentage}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-stone-100">
+                <div className="h-full rounded-full bg-orange-500 transition-all" style={{ width: `${percentage}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {showWriteLink ? (
+        <Button href={`/write-review/${course.id}`} className="mt-5">写一条评论</Button>
+      ) : null}
+    </PageSection>
   );
 }
 
@@ -675,7 +746,8 @@ function GuideCard() {
     </PageSection>
   );
 }
-function CardSection({ eyebrow, title, description, children, gridClassName = "lg:grid-cols-2" }: {
+function CardSection({ id, eyebrow, title, description, children, gridClassName = "lg:grid-cols-2" }: {
+  id?: string;
   eyebrow: string;
   title: string;
   description: string;
@@ -683,7 +755,7 @@ function CardSection({ eyebrow, title, description, children, gridClassName = "l
   gridClassName?: string;
 }) {
   return (
-    <section className="mx-auto mt-14 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id={id} className="mx-auto mt-14 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
       <SectionTitle eyebrow={eyebrow} title={title} description={description} />
       <div className={`mt-6 grid gap-5 ${gridClassName}`}>{children}</div>
     </section>

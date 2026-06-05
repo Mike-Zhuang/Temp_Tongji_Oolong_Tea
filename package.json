@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "tsc -b && vite build",
+    "prepare:data": "node scripts/copy-seed-to-public.mjs",
+    "dev": "node scripts/copy-seed-to-public.mjs && vite --host 127.0.0.1",
+    "build": "node scripts/copy-seed-to-public.mjs && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "visual-qa": "node scripts/visual-qa/screenshot.mjs",
+    "verify:network": "node scripts/visual-qa/verify-network.mjs",
     "lint": "eslint",
     "import:seed": "node scripts/import-seed-data.mjs"
   },

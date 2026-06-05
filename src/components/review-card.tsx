@@ -12,22 +12,24 @@ import { Stars } from "./stars";
 interface ReviewCardProps {
   review: Review;
   showCourseMeta?: boolean;
-  variant?: "card" | "list";
+  variant?: "card" | "list" | "preview";
 }
 
 const COLLAPSED_LENGTH = 220;
+const PREVIEW_COLLAPSED_LENGTH = 100;
 
 export function ReviewCard({ review, showCourseMeta = false, variant = "list" }: ReviewCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const collapsedLength = variant === "preview" ? PREVIEW_COLLAPSED_LENGTH : COLLAPSED_LENGTH;
   const content =
-    expanded || review.comment.length <= COLLAPSED_LENGTH
+    expanded || review.comment.length <= collapsedLength
       ? review.comment
-      : clampText(review.comment, COLLAPSED_LENGTH);
+      : clampText(review.comment, collapsedLength);
 
   return (
     <article
       className={cn(
-        variant === "list"
+        variant === "list" || variant === "preview"
           ? listDivider
           : "rounded-md border border-stone-200 bg-white p-5 transition hover:border-orange-200",
       )}
@@ -38,9 +40,9 @@ export function ReviewCard({ review, showCourseMeta = false, variant = "list" }:
             <Stars rating={review.rating} size="sm" />
             <InfoPill tone="warm">{review.semester}</InfoPill>
             {review.score ? <InfoPill>{review.score}</InfoPill> : null}
-            {review.tags.map((tag) => (
-              <InfoPill key={tag}>{tag}</InfoPill>
-            ))}
+            {variant !== "preview"
+              ? review.tags.map((tag) => <InfoPill key={tag}>{tag}</InfoPill>)
+              : null}
           </div>
           {showCourseMeta ? (
             <p className="text-sm font-semibold text-stone-800">
@@ -50,7 +52,7 @@ export function ReviewCard({ review, showCourseMeta = false, variant = "list" }:
             <p className="text-sm font-semibold text-stone-800">{review.teacherName}</p>
           )}
         </div>
-        <div className="text-right text-xs text-stone-500">
+        <div className="text-right text-xs text-stone-500 max-sm:w-full max-sm:text-left">
           <p>发布于 {formatDateTime(review.createdAt)}</p>
           {review.modifiedAt !== review.createdAt ? (
             <p>更新于 {formatDateTime(review.modifiedAt)}</p>
@@ -58,7 +60,7 @@ export function ReviewCard({ review, showCourseMeta = false, variant = "list" }:
         </div>
       </div>
       <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-stone-700">{content}</div>
-      {review.comment.length > COLLAPSED_LENGTH ? (
+      {review.comment.length > collapsedLength ? (
         <button
           type="button"
           onClick={() => setExpanded((current) => !current)}
@@ -67,12 +69,14 @@ export function ReviewCard({ review, showCourseMeta = false, variant = "list" }:
           {expanded ? "收起评论" : "展开全文"}
         </button>
       ) : null}
-      <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-stone-500">
-        <span>赞同 {review.approves}</span>
-        <span>不赞同 {review.disapproves}</span>
-        <span>{review.source === "seed" ? "历史导入" : "站内新增"}</span>
-        {review.moderatorRemark ? <span>管理员备注：{review.moderatorRemark}</span> : null}
-      </div>
+      {variant !== "preview" ? (
+        <div className="mt-5 flex flex-wrap items-center gap-4 text-xs text-stone-500">
+          <span>赞同 {review.approves}</span>
+          <span>不赞同 {review.disapproves}</span>
+          <span>{review.source === "seed" ? "历史导入" : "站内新增"}</span>
+          {review.moderatorRemark ? <span>管理员备注：{review.moderatorRemark}</span> : null}
+        </div>
+      ) : null}
     </article>
   );
 }

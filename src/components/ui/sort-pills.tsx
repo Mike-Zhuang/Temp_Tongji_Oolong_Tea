@@ -20,7 +20,7 @@ export function SortPills({ options, activeValue, getHref }: SortPillsProps) {
             href={getHref(option.value)}
             className={`rounded-full px-4 py-2 text-sm transition ${
               active
-                ? "bg-stone-900 text-white"
+                ? "bg-orange-500 text-white"
                 : "bg-stone-100 text-stone-600 hover:bg-stone-200"
             }`}
           >

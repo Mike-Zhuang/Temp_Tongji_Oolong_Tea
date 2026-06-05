@@ -1,13 +1,10 @@
 import { ADMIN_EMAIL, DEPARTMENT_FALLBACK } from "@/lib/constants";
-import rawCourses from "../../scripts/seed-data/wlc.courses.json";
-import rawRatings from "../../scripts/seed-data/wlc.ratings.json";
+import { loadSeedRows, type SeedCourseRow, type SeedReviewRow } from "@/lib/seed-loader";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type {
   AdminReviewUpdateInput,
   Course,
   HomePageData,
-  RawCourse,
-  RawRating,
   Review,
   ReviewFormInput,
   ReviewSort,
@@ -23,41 +20,9 @@ import {
   slugifyTeacherName,
 } from "@/lib/utils";
 
-interface CourseRow {
-  id: number;
-  code: string;
-  name: string;
-  teacher_name: string;
-  teacher_slug: string;
-  department: string | null;
-  credit: number;
-  categories: string[];
-  seed_rating_count: number;
-  seed_rating_average: number;
-}
+type CourseRow = SeedCourseRow;
 
-interface ReviewRow {
-  id: string;
-  source_id: number | null;
-  course_id: number;
-  course_code: string;
-  course_name: string;
-  teacher_name: string;
-  teacher_slug: string;
-  semester: string;
-  rating: number;
-  comment: string;
-  created_at: string;
-  modified_at: string;
-  score: string | null;
-  moderator_remark: string | null;
-  approves: number;
-  disapproves: number;
-  publish_status: "published" | "hidden";
-  source: "seed" | "user";
-  tags: string[] | null;
-  user_id: string | null;
-}
+type ReviewRow = SeedReviewRow;
 
 interface ReportRow {
   review_id: string;
@@ -73,49 +38,7 @@ interface DataIndex {
 }
 
 let dataIndexPromise: Promise<DataIndex> | null = null;
-
-function mapSeedCourse(row: RawCourse): CourseRow {
-  return {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    teacher_name: row.teacher,
-    teacher_slug: slugifyTeacherName(row.teacher),
-    department: row.department,
-    credit: row.credit,
-    categories: row.categories,
-    seed_rating_count: row.rating.count,
-    seed_rating_average: row.rating.avg,
-  };
-}
-
-function mapSeedReview(row: RawRating): ReviewRow {
-  return {
-    id: `seed-${row.id}`,
-    source_id: row.id,
-    course_id: row.course.id,
-    course_code: row.course.code,
-    course_name: row.course.name,
-    teacher_name: row.course.teacher,
-    teacher_slug: slugifyTeacherName(row.course.teacher),
-    semester: row.semester,
-    rating: row.rating,
-    comment: row.comment,
-    created_at: row.created_at,
-    modified_at: row.modified_at,
-    score: row.score,
-    moderator_remark: row.moderator_remark,
-    approves: row.reactions.approves,
-    disapproves: row.reactions.disapproves,
-    publish_status: "published",
-    source: "seed",
-    tags: [],
-    user_id: null,
-  };
-}
-
-const seedCourseRows = (rawCourses as RawCourse[]).map(mapSeedCourse);
-const seedReviewRows = (rawRatings as RawRating[]).map(mapSeedReview);
+let homeSummaryPromise: Promise<HomePageData | null> | null = null;
 
 async function fetchAllRows<T>(tableName: string, orderColumn: string) {
   const supabase = createSupabaseBrowserClient();
@@ -337,20 +260,56 @@ function buildDataIndex(courseRows: CourseRow[], reviewRows: ReviewRow[]): DataI
 
 async function loadDataIndex() {
   if (!dataIndexPromise) {
-    dataIndexPromise = fetchSupabaseRows().then((supabaseData) => {
+    dataIndexPromise = fetchSupabaseRows().then(async (supabaseData) => {
       if (supabaseData.canUseDatabase) {
         return buildDataIndex(supabaseData.courses, supabaseData.reviews);
       }
 
-      return buildDataIndex(seedCourseRows, seedReviewRows);
+      const seedRows = await loadSeedRows();
+      return buildDataIndex(seedRows.courses, seedRows.reviews);
     });
   }
 
   return dataIndexPromise;
 }
 
+async function fetchHomeSummary(): Promise<HomePageData | null> {
+  if (!homeSummaryPromise) {
+    homeSummaryPromise = fetch("/data/home-summary.json")
+      .then((response) => (response.ok ? (response.json() as Promise<HomePageData>) : null))
+      .catch(() => null);
+  }
+
+  return homeSummaryPromise;
+}
+
+function buildHomePageDataFromIndex(data: DataIndex): HomePageData {
+  return {
+    featuredCourses: [...data.courses]
+      .filter((course) => course.reviewCount > 0)
+      .sort((left, right) => right.reviewCount - left.reviewCount)
+      .slice(0, 6),
+    topTeachers: [...data.teachers]
+      .filter((teacher) => teacher.reviewCount > 0)
+      .sort((left, right) => right.averageRating - left.averageRating || right.reviewCount - left.reviewCount)
+      .slice(0, 6),
+    latestReviews: data.reviews.filter((review) => review.publishStatus === "published").slice(0, 8),
+    cautionCourses: [...data.courses]
+      .filter((course) => course.reviewCount >= 2)
+      .sort((left, right) => left.averageRating - right.averageRating || right.reviewCount - left.reviewCount)
+      .slice(0, 6),
+    siteStats: {
+      courseCount: data.courses.length,
+      teacherCount: data.teachers.length,
+      reviewCount: data.reviews.filter((review) => review.publishStatus === "published").length,
+      categoryCount: data.categories.length,
+    },
+  };
+}
+
 export function invalidateDataCache() {
   dataIndexPromise = null;
+  homeSummaryPromise = null;
 }
 
 function computeSearchScore(target: string, query: string) {
@@ -443,29 +402,17 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 }
 
 export async function getHomePageData(): Promise<HomePageData> {
-  const data = await loadDataIndex();
+  const supabaseData = await fetchSupabaseRows();
+  if (supabaseData.canUseDatabase) {
+    return buildHomePageDataFromIndex(buildDataIndex(supabaseData.courses, supabaseData.reviews));
+  }
 
-  return {
-    featuredCourses: [...data.courses]
-      .filter((course) => course.reviewCount > 0)
-      .sort((left, right) => right.reviewCount - left.reviewCount)
-      .slice(0, 6),
-    topTeachers: [...data.teachers]
-      .filter((teacher) => teacher.reviewCount > 0)
-      .sort((left, right) => right.averageRating - left.averageRating || right.reviewCount - left.reviewCount)
-      .slice(0, 6),
-    latestReviews: data.reviews.filter((review) => review.publishStatus === "published").slice(0, 8),
-    cautionCourses: [...data.courses]
-      .filter((course) => course.reviewCount >= 2)
-      .sort((left, right) => left.averageRating - right.averageRating || right.reviewCount - left.reviewCount)
-      .slice(0, 6),
-    siteStats: {
-      courseCount: data.courses.length,
-      teacherCount: data.teachers.length,
-      reviewCount: data.reviews.filter((review) => review.publishStatus === "published").length,
-      categoryCount: data.categories.length,
-    },
-  };
+  const summary = await fetchHomeSummary();
+  if (summary) {
+    return summary;
+  }
+
+  throw new Error("首页摘要数据暂不可用，请先执行 npm run build 生成 public/data/home-summary.json。");
 }
 
 export async function searchSite(query: string, sort: SearchSort = "relevance"): Promise<SearchResult> {

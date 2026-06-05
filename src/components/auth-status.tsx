@@ -5,6 +5,8 @@ import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { UserProfile } from "@/lib/types";
 
+import { Button } from "./ui/button";
+
 interface AuthStatusProps {
   user: UserProfile | null;
 }
@@ -27,12 +29,9 @@ export function AuthStatus({ user }: AuthStatusProps) {
   if (!user) {
     return (
       <div className="flex items-center gap-2">
-        <a
-          href="/auth"
-          className="rounded-full border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-stone-900 hover:text-stone-900"
-        >
+        <Button href="/auth" className="px-4 py-2 text-sm">
           校园邮箱登录
-        </a>
+        </Button>
       </div>
     );
   }
@@ -47,7 +46,7 @@ export function AuthStatus({ user }: AuthStatusProps) {
         type="button"
         onClick={handleSignOut}
         disabled={isPending}
-        className="rounded-full bg-stone-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         退出
       </button>

@@ -28,11 +28,12 @@ cp .env.example .env.local
 npm run dev
 ```
 
-没有配置 Supabase 时，网站会给出明确提示；课程、评论、登录和后台都依赖 Supabase 数据表与 RLS。
+没有配置 Supabase 时，网站会回退到内置 seed 数据；首页优先读取构建时生成的 `public/data/home-summary.json`，课程/搜索页再按需加载完整 JSON。
 
 ## 数据位置
 
 - 原始课程/评论种子数据：`scripts/seed-data/`
+- 构建后运行时静态数据：`public/data/`（由 `npm run prepare:data` 或 `npm run build` 自动生成，不提交 git）
 - Buy me a coffee 图片：`supabase/storage/site-assets/`
 - 数据库迁移：`supabase/migrations/`
 
@@ -67,7 +68,19 @@ tjpush_admin@mikezhuang.cn
 
 ## 静态部署
 
-- 构建命令：`npm run build`
+- 构建命令：`npm run build`（会先复制 seed 到 `public/data/` 并生成 `home-summary.json`）
 - 静态产物目录：`dist`
 - 宝塔/Nginx 站点根目录可指向 `dist` 发布后的目录，例如 `/www/wwwroot/1.mikezhuang.cn`
 - `deploy/sync-deploy.sh` 会自动拉取仓库、构建静态产物、发布到站点目录，并停止旧的 PM2 Next 进程
+
+### 慢网优化（建议）
+
+首屏 JS 已不再打包 seed 数据（约 130 KiB gzip），首页额外请求 `/data/home-summary.json`。请在 Nginx 对 `/assets/` 与 `/data/` 开启 **gzip** 或 **brotli** 压缩，例如：
+
+```nginx
+gzip on;
+gzip_types application/javascript application/json text/css;
+gzip_min_length 256;
+```
+
+完整 seed JSON（`/data/wlc.*.json`）仅在进入搜索/课程页且 Supabase 不可用时按需加载。

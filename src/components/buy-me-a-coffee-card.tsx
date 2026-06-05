@@ -1,13 +1,21 @@
 import buyMeACoffeeUrl from "../../supabase/storage/site-assets/buy-me-a-coffee.jpg";
 
-export function BuyMeACoffeeCard() {
+interface BuyMeACoffeeCardProps {
+  compact?: boolean;
+}
+
+export function BuyMeACoffeeCard({ compact = false }: BuyMeACoffeeCardProps) {
   return (
     <aside className="rounded-lg border border-stone-200 bg-white p-5">
       <a href={buyMeACoffeeUrl} target="_blank" rel="noreferrer" className="block">
         <img
           src={buyMeACoffeeUrl}
           alt="Buy me a coffee"
-          className="mx-auto h-auto max-h-[720px] w-full rounded-md object-contain"
+          loading="lazy"
+          decoding="async"
+          className={`mx-auto h-auto w-full rounded-md object-contain ${
+            compact ? "max-h-48" : "max-h-[720px]"
+          }`}
         />
       </a>
       <div className="space-y-2 pt-5">
@@ -24,7 +32,9 @@ export function BuyMeACoffeeCard() {
           >
             打开原图扫码
           </a>
-          <p className="self-center text-xs text-stone-400">如果卡片里看不清，直接点按钮打开原图。</p>
+          {!compact ? (
+            <p className="self-center text-xs text-stone-400">如果卡片里看不清，直接点按钮打开原图。</p>
+          ) : null}
         </div>
       </div>
     </aside>

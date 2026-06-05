@@ -59,7 +59,7 @@ export function SearchBar({
         />
         <button
           type="submit"
-          className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+          className="shrink-0 whitespace-nowrap min-w-[4.5rem] rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
         >
           搜索
         </button>

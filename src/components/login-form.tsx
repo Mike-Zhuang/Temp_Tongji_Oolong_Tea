@@ -5,6 +5,8 @@ import { useState } from "react";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { createSupabaseBrowserClient, getSiteUrl } from "@/lib/supabase/client";
 
+import { Button } from "./ui/button";
+
 interface LoginFormProps {
   isEnabled: boolean;
 }
@@ -74,13 +76,9 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
           className="w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
         />
       </div>
-      <button
-        type="submit"
-        disabled={isSubmitting || !isEnabled}
-        className="w-full rounded-full bg-stone-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" disabled={isSubmitting || !isEnabled} className="w-full">
         {!isEnabled ? "登录功能暂未开放" : isSubmitting ? "发送中..." : "发送登录链接"}
-      </button>
+      </Button>
       {message ? <p className="text-sm text-stone-600">{message}</p> : null}
     </form>
   );
