@@ -81,6 +81,29 @@ export function clampText(value: string, maxLength: number) {
   return `${value.slice(0, maxLength).trimEnd()}...`;
 }
 
+/** 启发式判断评论是否使用了 Markdown 语法，避免把 **加粗** 等原样展示 */
+export function looksLikeMarkdown(value: string) {
+  const text = value.trim();
+  if (!text) {
+    return false;
+  }
+
+  const patterns = [
+    /^#{1,6}\s+/m,
+    /^\s*[-*+]\s+/m,
+    /^\s*\d+\.\s+/m,
+    /^>\s+/m,
+    /```[\s\S]*?```/,
+    /\*\*[^*\n]+?\*\*/,
+    /__[^_\n]+?__/,
+    /(?<![\\`])\[[^\]]+\]\([^)]+\)/,
+    /(?<![\\`])`[^`\n]+`/,
+    /~~[^~\n]+~~/,
+  ];
+
+  return patterns.some((pattern) => pattern.test(text));
+}
+
 export function buildCourseUrl(courseId: number) {
   return `/course/${courseId}`;
 }

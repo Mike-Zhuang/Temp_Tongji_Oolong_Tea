@@ -1,10 +1,11 @@
 import { useState } from "react";
 
 import { cardHover, listDivider } from "@/lib/ui-classes";
-import { cn, clampText, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import type { Review } from "@/lib/types";
 
 import { InfoPill } from "./info-pill";
+import { ReviewComment } from "./review-comment";
 import { Stars } from "./stars";
 
 interface ReviewCardProps {
@@ -19,10 +20,6 @@ const PREVIEW_COLLAPSED_LENGTH = 100;
 export function ReviewCard({ review, showCourseMeta = false, variant = "list" }: ReviewCardProps) {
   const [expanded, setExpanded] = useState(false);
   const collapsedLength = variant === "preview" ? PREVIEW_COLLAPSED_LENGTH : COLLAPSED_LENGTH;
-  const content =
-    expanded || review.comment.length <= collapsedLength
-      ? review.comment
-      : clampText(review.comment, collapsedLength);
 
   return (
     <article
@@ -57,7 +54,12 @@ export function ReviewCard({ review, showCourseMeta = false, variant = "list" }:
           ) : null}
         </div>
       </div>
-      <div className="text-pretty mt-4 whitespace-pre-wrap text-sm leading-7 text-text-secondary">{content}</div>
+      <ReviewComment
+        comment={review.comment}
+        expanded={expanded}
+        collapsedLength={collapsedLength}
+        className="mt-4 text-sm leading-7 text-text-secondary"
+      />
       {review.comment.length > collapsedLength ? (
         <button
           type="button"
