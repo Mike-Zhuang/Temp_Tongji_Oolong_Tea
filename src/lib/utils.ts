@@ -22,6 +22,24 @@ export function formatRating(value: number) {
   return value.toFixed(1);
 }
 
+/** 老师均分 = 各课程均分按评论数加权；无评论课程不参与计算 */
+export function computeTeacherAverageRating(
+  courses: Array<{ averageRating: number; reviewCount: number }>,
+): number {
+  let weightedSum = 0;
+  let totalReviews = 0;
+
+  courses.forEach((course) => {
+    if (course.reviewCount <= 0) {
+      return;
+    }
+    weightedSum += course.averageRating * course.reviewCount;
+    totalReviews += course.reviewCount;
+  });
+
+  return totalReviews > 0 ? weightedSum / totalReviews : 0;
+}
+
 export function formatDateTime(value: string | null) {
   if (!value) {
     return "暂无";

@@ -98,6 +98,21 @@ function sortReviewsByLatest(left, right) {
   );
 }
 
+function computeTeacherAverageRating(courses) {
+  let weightedSum = 0;
+  let totalReviews = 0;
+
+  courses.forEach((course) => {
+    if (course.reviewCount <= 0) {
+      return;
+    }
+    weightedSum += course.averageRating * course.reviewCount;
+    totalReviews += course.reviewCount;
+  });
+
+  return totalReviews > 0 ? weightedSum / totalReviews : 0;
+}
+
 function buildDataIndex(courseRows, reviewRows) {
   const reviews = reviewRows.map(mapReview);
   const reviewsByCourseId = new Map();
@@ -164,7 +179,7 @@ function buildDataIndex(courseRows, reviewRows) {
         departmentHints: [course.department ?? DEPARTMENT_FALLBACK],
         courseCount: 1,
         reviewCount: course.reviewCount,
-        averageRating: course.averageRating,
+        averageRating: computeTeacherAverageRating([courseCard]),
         lastReviewAt: course.lastReviewAt,
         courses: [courseCard],
       });
@@ -174,9 +189,7 @@ function buildDataIndex(courseRows, reviewRows) {
     existing.courseCount += 1;
     existing.reviewCount += course.reviewCount;
     existing.courses.push(courseCard);
-    existing.averageRating =
-      existing.courses.reduce((sum, item) => sum + item.averageRating, 0) /
-      Math.max(existing.courses.length, 1);
+    existing.averageRating = computeTeacherAverageRating(existing.courses);
     existing.departmentHints = Array.from(
       new Set([...existing.departmentHints, course.department ?? DEPARTMENT_FALLBACK]),
     );
