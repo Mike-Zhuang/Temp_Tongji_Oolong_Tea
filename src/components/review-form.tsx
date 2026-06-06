@@ -1,8 +1,12 @@
 import { useState } from "react";
 
+import { alertError, focusRing, inputField } from "@/lib/ui-classes";
 import { REVIEW_TAG_OPTIONS } from "@/lib/constants";
 import { createUserReview, invalidateDataCache } from "@/lib/data-client";
 import type { Course, UserProfile } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+import { Button } from "./ui/button";
 
 interface ReviewFormProps {
   course: Course;
@@ -18,6 +22,7 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
     tags: [] as string[],
   });
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function toggleTag(tag: string) {
@@ -32,9 +37,11 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setMessageIsError(false);
 
     if (!formState.semester.trim() || formState.comment.trim().length < 10) {
       setMessage("请补充学期，并至少写 10 个字的评论正文。");
+      setMessageIsError(true);
       return;
     }
 
@@ -57,7 +64,8 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
       setMessage("评论已发布，现在已经可以在课程页看到。");
       window.location.href = `/course/${course.id}`;
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "评论提交失败。");
+      setMessage(error instanceof Error ? error.message : "评论提交失败，请稍后重试。");
+      setMessageIsError(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -76,7 +84,7 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
                 rating: Number(event.target.value),
               }))
             }
-            className="w-full rounded-2xl border border-stone-200 px-4 py-3 font-normal outline-none ring-orange-200 focus:ring-4"
+            className={inputField}
           >
             {[5, 4, 3, 2, 1].map((rating) => (
               <option key={rating} value={rating}>
@@ -93,7 +101,7 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
               setFormState((current) => ({ ...current, semester: event.target.value }))
             }
             placeholder="例如 2025-2026第一学期"
-            className="w-full rounded-2xl border border-stone-200 px-4 py-3 font-normal outline-none ring-orange-200 focus:ring-4"
+            className={inputField}
           />
         </label>
       </div>
@@ -105,11 +113,11 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
             setFormState((current) => ({ ...current, score: event.target.value }))
           }
           placeholder="例如 优 / 良 / A / W / 未出分"
-          className="w-full rounded-2xl border border-stone-200 px-4 py-3 font-normal outline-none ring-orange-200 focus:ring-4"
+          className={inputField}
         />
       </label>
-      <div className="space-y-3">
-        <p className="text-sm font-semibold text-stone-900">课程标签</p>
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold text-stone-900">课程标签</legend>
         <div className="flex flex-wrap gap-2">
           {REVIEW_TAG_OPTIONS.map((tag) => {
             const selected = formState.tags.includes(tag.value);
@@ -117,19 +125,22 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
               <button
                 key={tag.value}
                 type="button"
+                aria-pressed={selected}
                 onClick={() => toggleTag(tag.value)}
-                className={`rounded-full px-4 py-2 text-sm transition ${
+                className={cn(
+                  "rounded-md px-4 py-2 text-sm transition duration-200",
+                  focusRing,
                   selected
-                    ? "bg-orange-500 text-white"
-                    : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                }`}
+                    ? "bg-accent text-white"
+                    : "bg-surface-muted text-stone-600 hover:bg-stone-200/70",
+                )}
               >
                 {tag.label}
               </button>
             );
           })}
         </div>
-      </div>
+      </fieldset>
       <label className="space-y-2 text-sm font-semibold text-stone-900">
         评论正文
         <textarea
@@ -139,17 +150,17 @@ export function ReviewForm({ course, user }: ReviewFormProps) {
           }
           placeholder="尽量写清楚课程内容、上课自由度、考核方式、给分体验、授课质量和你觉得有参考价值的细节。"
           rows={9}
-          className="w-full rounded-md border border-stone-200 px-4 py-3 font-normal leading-7 outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4"
+          className={cn(inputField, "leading-7")}
         />
       </label>
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-      >
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "提交中..." : "发布评论"}
-      </button>
-      {message ? <p className="text-sm text-stone-600">{message}</p> : null}
+      </Button>
+      {message ? (
+        <p role="alert" className={messageIsError ? alertError : "text-sm text-text-muted"}>
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

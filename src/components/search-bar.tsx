@@ -1,6 +1,7 @@
-"use client";
-
 import { useState } from "react";
+
+import { focusRing } from "@/lib/ui-classes";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   initialQuery?: string;
@@ -12,7 +13,7 @@ function SearchIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="h-5 w-5 shrink-0 text-orange-500"
+      className="h-5 w-5 shrink-0 text-accent"
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
@@ -43,9 +44,10 @@ export function SearchBar({
         搜索课程或老师
       </label>
       <div
-        className={`flex items-center gap-3 rounded-full border border-stone-200 bg-white shadow-sm ${
-          large ? "px-4 py-4 sm:px-6" : "px-4 py-3"
-        }`}
+        className={cn(
+          "flex items-center gap-3 rounded-lg border border-border bg-surface",
+          large ? "px-4 py-4 sm:px-6" : "px-4 py-3",
+        )}
       >
         <SearchIcon />
         <input
@@ -53,13 +55,17 @@ export function SearchBar({
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
-          className={`w-full bg-transparent text-stone-900 outline-none placeholder:text-stone-400 ${
-            large ? "text-base sm:text-lg" : "text-sm sm:text-base"
-          }`}
+          className={cn(
+            "w-full bg-transparent text-stone-900 outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            large ? "text-base sm:text-lg" : "text-sm sm:text-base",
+          )}
         />
         <button
           type="submit"
-          className="shrink-0 whitespace-nowrap min-w-[4.5rem] rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+          className={cn(
+            "shrink-0 min-w-[4.5rem] whitespace-nowrap rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-accent-hover active:scale-[0.98]",
+            focusRing,
+          )}
         >
           搜索
         </button>

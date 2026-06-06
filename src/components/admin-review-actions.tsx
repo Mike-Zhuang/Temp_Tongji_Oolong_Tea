@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { inputField } from "@/lib/ui-classes";
+
 import { updateAdminReview } from "@/lib/data-client";
 import type { PublishStatus, Review } from "@/lib/types";
 
@@ -34,7 +36,7 @@ export function AdminReviewActions({ review }: AdminReviewActionsProps) {
         onChange={(event) => setRemark(event.target.value)}
         rows={3}
         placeholder="管理员备注"
-        className="w-full rounded-2xl border border-stone-200 px-3 py-2 text-sm outline-none ring-orange-200 focus:ring-4"
+        className={inputField}
       />
       <div className="flex flex-wrap gap-2">
         <button

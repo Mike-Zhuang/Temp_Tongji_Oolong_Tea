@@ -1,9 +1,9 @@
-"use client";
-
 import { useState } from "react";
 
+import { alertError, alertSuccess, inputField } from "@/lib/ui-classes";
 import { ADMIN_EMAIL } from "@/lib/constants";
 import { createSupabaseBrowserClient, getSiteUrl } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 import { Button } from "./ui/button";
 
@@ -14,14 +14,17 @@ interface LoginFormProps {
 export function LoginForm({ isEnabled }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setMessageTone(null);
 
     if (!isEnabled) {
       setMessage("登录功能暂未开放，站长正在补全配置。");
+      setMessageTone("error");
       return;
     }
 
@@ -32,12 +35,14 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
 
     if (!canLogin) {
       setMessage("只允许使用同济校园邮箱，管理员可使用预设管理员邮箱登录。");
+      setMessageTone("error");
       return;
     }
 
     const supabase = createSupabaseBrowserClient();
     if (!supabase) {
       setMessage("登录功能暂未开放，请稍后再试。");
+      setMessageTone("error");
       return;
     }
 
@@ -54,10 +59,12 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
 
     if (error) {
       setMessage(error.message);
+      setMessageTone("error");
       return;
     }
 
-    setMessage("登录链接已经发送到你的校园邮箱，请查收后返回本站。");
+    setMessage("登录链接已发送到你的校园邮箱，请查收后返回本站。");
+    setMessageTone("success");
   }
 
   return (
@@ -73,13 +80,17 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
           onChange={(event) => setEmail(event.target.value)}
           placeholder="example@tongji.edu.cn 或管理员邮箱"
           disabled={!isEnabled}
-          className="w-full rounded-2xl border border-stone-200 px-4 py-3 text-sm outline-none ring-orange-200 placeholder:text-stone-400 focus:ring-4 disabled:cursor-not-allowed disabled:bg-stone-100 disabled:text-stone-400"
+          className={inputField}
         />
       </div>
       <Button type="submit" disabled={isSubmitting || !isEnabled} className="w-full">
         {!isEnabled ? "登录功能暂未开放" : isSubmitting ? "发送中..." : "发送登录链接"}
       </Button>
-      {message ? <p className="text-sm text-stone-600">{message}</p> : null}
+      {message ? (
+        <p role="alert" className={cn(messageTone === "success" ? alertSuccess : alertError)}>
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

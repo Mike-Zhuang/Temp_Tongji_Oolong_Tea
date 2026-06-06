@@ -1,5 +1,6 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
+import { focusRing } from "@/lib/ui-classes";
 import { cn } from "@/lib/utils";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
@@ -12,10 +13,10 @@ interface ButtonBaseProps {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-orange-500 text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60",
+    "bg-accent text-white hover:bg-accent-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
   secondary:
-    "border border-stone-300 bg-white text-stone-800 hover:border-stone-400 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60",
-  ghost: "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+    "border border-border bg-surface text-stone-800 hover:border-stone-300 hover:bg-surface-muted active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+  ghost: "text-stone-600 hover:bg-surface-muted hover:text-stone-900 active:scale-[0.98]",
 };
 
 type ButtonProps = ButtonBaseProps &
@@ -36,7 +37,8 @@ export function Button({
   ...props
 }: ButtonProps | ButtonLinkProps) {
   const classes = cn(
-    "inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition",
+    "inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold transition duration-200",
+    focusRing,
     variantClasses[variant],
     className,
   );

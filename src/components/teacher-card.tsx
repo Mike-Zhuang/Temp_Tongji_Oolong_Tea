@@ -1,5 +1,7 @@
 import type { TeacherSummary } from "@/lib/types";
+import { cardHover } from "@/lib/ui-classes";
 import { buildTeacherUrl, formatDateTime, formatRating } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { InfoPill } from "./info-pill";
 import { Stars } from "./stars";
@@ -12,10 +14,10 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
   const hasRating = Number.isFinite(teacher.averageRating) && teacher.averageRating > 0;
 
   return (
-    <article className="rounded-md border border-stone-200 bg-white p-5 transition hover:border-orange-200">
+    <article className={cn("rounded-lg border border-border bg-surface p-5", cardHover)}>
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-3">
-          <a href={buildTeacherUrl(teacher.slug)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
+          <a href={buildTeacherUrl(teacher.slug)} className="text-xl font-bold text-stone-900 hover:text-accent">
             {teacher.name}
           </a>
           <div className="flex flex-wrap gap-2">
@@ -27,10 +29,10 @@ export function TeacherCard({ teacher }: TeacherCardProps) {
             共 {teacher.courseCount} 门课，累计 {teacher.reviewCount} 条评论
           </p>
         </div>
-        <div className="rounded-md bg-orange-50 px-4 py-3 text-right">
+        <div className="text-right">
           {hasRating ? (
             <>
-              <p className="text-2xl font-bold text-stone-900">{formatRating(teacher.averageRating)}</p>
+              <p className="tabular-nums text-2xl font-bold text-stone-900">{formatRating(teacher.averageRating)}</p>
               <div className="mt-1 flex justify-end">
                 <Stars rating={teacher.averageRating} size="sm" />
               </div>

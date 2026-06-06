@@ -1,5 +1,7 @@
 import type { Course } from "@/lib/types";
+import { cardHover } from "@/lib/ui-classes";
 import { buildCourseUrl, buildTeacherUrl, formatDateTime, formatRating } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { InfoPill } from "./info-pill";
 import { Stars } from "./stars";
@@ -10,7 +12,7 @@ interface CourseCardProps {
 
 export function CourseCard({ course }: CourseCardProps) {
   return (
-    <article className="rounded-md border border-stone-200 bg-white p-5 transition hover:border-orange-200">
+    <article className={cn("rounded-lg border border-border bg-surface p-5", cardHover)}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -20,11 +22,11 @@ export function CourseCard({ course }: CourseCardProps) {
             ))}
           </div>
           <div>
-            <a href={buildCourseUrl(course.id)} className="text-xl font-bold text-stone-900 hover:text-orange-600">
+            <a href={buildCourseUrl(course.id)} className="text-xl font-bold text-stone-900 hover:text-accent">
               {course.name}
             </a>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-stone-500">
-              <a href={buildTeacherUrl(course.teacherSlug)} className="font-medium text-stone-700 hover:text-orange-600">
+              <a href={buildTeacherUrl(course.teacherSlug)} className="font-medium text-stone-700 hover:text-accent">
                 {course.teacherName}
               </a>
               <span>·</span>
@@ -34,8 +36,8 @@ export function CourseCard({ course }: CourseCardProps) {
             </div>
           </div>
         </div>
-        <div className="min-w-28 rounded-md bg-orange-50 px-4 py-3 text-right">
-          <p className="text-2xl font-bold text-stone-900">{formatRating(course.averageRating)}</p>
+        <div className="min-w-28 text-right">
+          <p className="tabular-nums text-2xl font-bold text-stone-900">{formatRating(course.averageRating)}</p>
           <div className="mt-1 flex justify-end">
             <Stars rating={course.averageRating} size="sm" />
           </div>

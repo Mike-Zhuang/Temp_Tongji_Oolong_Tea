@@ -1,9 +1,9 @@
-"use client";
-
 import { useState } from "react";
 
+import { focusRing } from "@/lib/ui-classes";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { UserProfile } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 import { Button } from "./ui/button";
 
@@ -46,7 +46,10 @@ export function AuthStatus({ user }: AuthStatusProps) {
         type="button"
         onClick={handleSignOut}
         disabled={isPending}
-        className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className={cn(
+          "rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-stone-800 transition duration-200 hover:border-stone-300 hover:bg-surface-muted active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60",
+          focusRing,
+        )}
       >
         退出
       </button>

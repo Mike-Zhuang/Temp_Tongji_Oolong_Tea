@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
-import { surfaceSection, surfaceSectionMuted } from "@/lib/ui-classes";
+import { surfacePlain, surfaceSection, surfaceSectionMuted } from "@/lib/ui-classes";
 
 interface PageSectionProps {
   children: ReactNode;
-  variant?: "primary" | "muted";
+  variant?: "primary" | "muted" | "plain";
   className?: string;
 }
 
+const variantClasses = {
+  primary: surfaceSection,
+  muted: surfaceSectionMuted,
+  plain: surfacePlain,
+};
+
 export function PageSection({ children, variant = "primary", className }: PageSectionProps) {
-  return (
-    <section className={cn(variant === "muted" ? surfaceSectionMuted : surfaceSection, className)}>
-      {children}
-    </section>
-  );
+  return <section className={cn(variantClasses[variant], className)}>{children}</section>;
 }
