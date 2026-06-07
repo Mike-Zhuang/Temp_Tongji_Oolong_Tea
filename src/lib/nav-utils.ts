@@ -5,6 +5,9 @@ export function isNavActive(currentPath: string, href: string): boolean {
   if (href === "/search") {
     return currentPath === "/search";
   }
+  if (href === "/scheduler") {
+    return currentPath === "/scheduler";
+  }
   if (href === "/me") {
     return currentPath === "/me";
   }
@@ -24,6 +27,9 @@ export function getPageTitle(path: string): string {
   }
   if (path === "/search") {
     return `搜索 · ${base}`;
+  }
+  if (path === "/scheduler") {
+    return `模拟排课 · ${base}`;
   }
   if (path.startsWith("/course/")) {
     return `课程详情 · ${base}`;

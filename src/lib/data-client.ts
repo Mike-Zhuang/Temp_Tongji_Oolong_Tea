@@ -8,6 +8,8 @@ import type {
   Review,
   ReviewFormInput,
   ReviewSort,
+  ScheduleData,
+  SelectedScheduleState,
   SearchResult,
   SearchSort,
   TeacherCourseCard,
@@ -40,6 +42,7 @@ interface DataIndex {
 
 let dataIndexPromise: Promise<DataIndex> | null = null;
 let homeSummaryPromise: Promise<HomePageData | null> | null = null;
+let scheduleDataPromise: Promise<ScheduleData> | null = null;
 
 async function fetchAllRows<T>(tableName: string, orderColumn: string) {
   const supabase = createSupabaseBrowserClient();
@@ -309,6 +312,30 @@ function buildHomePageDataFromIndex(data: DataIndex): HomePageData {
 export function invalidateDataCache() {
   dataIndexPromise = null;
   homeSummaryPromise = null;
+}
+
+async function fetchJson<T>(url: string) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`无法加载 ${url}`);
+  }
+  return response.json() as Promise<T>;
+}
+
+export async function getScheduleData(): Promise<ScheduleData> {
+  if (!scheduleDataPromise) {
+    scheduleDataPromise = Promise.all([
+      fetchJson<ScheduleData["courses"]>("/data/schedule-courses.json"),
+      fetchJson<ScheduleData["filters"]>("/data/schedule-filters.json"),
+      fetchJson<ScheduleData["summary"]>("/data/schedule-summary.json"),
+    ]).then(([courses, filters, summary]) => ({
+      courses,
+      filters,
+      summary,
+    }));
+  }
+
+  return scheduleDataPromise;
 }
 
 function computeSearchScore(target: string, query: string) {
@@ -613,4 +640,56 @@ export async function updateAdminReview(reviewId: string, input: AdminReviewUpda
 
   invalidateDataCache();
   return mapReview(data as ReviewRow);
+}
+
+export async function getUserSchedule(userId: string, term: string): Promise<SelectedScheduleState | null> {
+  const supabase = createSupabaseBrowserClient();
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("user_schedules")
+    .select("term, selected_course_ids, updated_at")
+    .eq("user_id", userId)
+    .eq("term", term)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("云端课表暂不可用，已继续使用本地课表。", error);
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    term: data.term,
+    selectedCourseIds: Array.isArray(data.selected_course_ids) ? data.selected_course_ids.map(String) : [],
+    updatedAt: data.updated_at,
+  };
+}
+
+export async function saveUserSchedule(input: SelectedScheduleState & { userId: string }) {
+  const supabase = createSupabaseBrowserClient();
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.from("user_schedules").upsert(
+    {
+      user_id: input.userId,
+      term: input.term,
+      selected_course_ids: input.selectedCourseIds,
+      updated_at: input.updatedAt,
+    },
+    {
+      onConflict: "user_id,term",
+    },
+  );
+
+  if (error) {
+    console.warn("云端课表保存失败，本地课表仍已保留。", error);
+  }
 }

@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "node_modules/**",
+    "ref_repo/**",
+    "public/data/**",
   ]),
   {
     files: ["src/**/*.{ts,tsx}"],

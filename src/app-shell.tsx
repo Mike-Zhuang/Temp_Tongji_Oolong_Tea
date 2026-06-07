@@ -9,6 +9,7 @@ import { ReviewCard } from "@/components/review-card";
 import { ReviewForm } from "@/components/review-form";
 import { SearchBar } from "@/components/search-bar";
 import { SectionTitle } from "@/components/section-title";
+import { SchedulerPage } from "@/components/scheduler-page";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Stars } from "@/components/stars";
@@ -129,6 +130,9 @@ export function App() {
     if (route.path === "/search") {
       return <SearchPage query={route.params.get("q") ?? ""} sort={(route.params.get("sort") ?? "relevance") as SearchSort} />;
     }
+    if (route.path === "/scheduler") {
+      return <SchedulerPage user={user} />;
+    }
     if (route.path.startsWith("/teacher/")) {
       return <TeacherPage teacherSlug={decodeURIComponent(route.path.replace("/teacher/", ""))} />;
     }
@@ -153,9 +157,11 @@ export function App() {
     return <NotFoundPage />;
   }, [route.path, route.params, user]);
 
+  const searchQuery = route.path === "/search" ? (route.params.get("q") ?? "") : "";
+
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader user={user} currentPath={route.path} />
+      <SiteHeader user={user} currentPath={route.path} searchQuery={searchQuery} />
       <main id="main-content" className="flex-1">{content}</main>
       <SiteFooter user={user} />
     </div>
@@ -390,9 +396,6 @@ function SearchPage({ query, sort }: { query: string; sort: SearchSort }) {
           title="找课程，也找老师"
           description="统一搜索框会同时命中课程名、老师名、课号和课程分类。建议先搜老师，再看名下所有课。"
         />
-        <div className="mt-6">
-          <SearchBar initialQuery={query} />
-        </div>
         <SortPills
           options={SEARCH_SORT_OPTIONS}
           activeValue={sort}
@@ -542,7 +545,7 @@ function CoursePage({ courseId, sort }: { courseId: number; sort: ReviewSort }) 
           </div>
         </PageSection>
       </div>
-      <div className="lg:sticky lg:top-24">
+      <div className="lg:sticky lg:top-32">
         <CourseSidebar course={course} />
       </div>
     </div>

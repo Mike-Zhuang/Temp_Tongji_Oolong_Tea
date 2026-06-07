@@ -156,3 +156,114 @@ export interface AdminReviewUpdateInput {
   publishStatus?: PublishStatus;
   moderatorRemark?: string | null;
 }
+
+export interface ScheduleArrangement {
+  teacher: string;
+  teacherId: string;
+  weekday: number;
+  periods: number[];
+  weeks: number[];
+  room: string;
+  rawWeeks: string;
+  rawPeriods: string;
+}
+
+export interface ScheduleCourse {
+  id: string;
+  code: string;
+  name: string;
+  weeklyHours: string;
+  leader: string;
+  teachers: string[];
+  teacherIds: string[];
+  teacherText: string;
+  teacherIdText: string;
+  teacherTitle: string;
+  nature: string;
+  language: string;
+  campus: string;
+  audience: string;
+  enrollment: number | null;
+  startWeek: number | null;
+  endWeek: number | null;
+  department: string;
+  rawSchedule: string;
+  arrangements: ScheduleArrangement[];
+  sourceLine: number;
+  searchText: string;
+}
+
+export interface ScheduleFilterOption {
+  value: string;
+  count: number;
+}
+
+export interface ScheduleFilterData {
+  term: string;
+  natures: ScheduleFilterOption[];
+  languages: ScheduleFilterOption[];
+  campuses: ScheduleFilterOption[];
+  departments: ScheduleFilterOption[];
+  generalEducationNatures: string[];
+  weekdays: number[];
+  periods: number[];
+}
+
+export interface ScheduleSummary {
+  term: string;
+  source: string;
+  generatedAt: string;
+  courseCount: number;
+  scheduledCourseCount: number;
+  unscheduledCourseCount: number;
+  arrangementCount: number;
+  warningCount: number;
+}
+
+export interface ScheduleFilters {
+  query: string;
+  nature: string;
+  language: string;
+  campus: string;
+  department: string;
+  weekday: number | null;
+  period: number | null;
+  generalOnly: boolean;
+}
+
+export interface ScheduleData {
+  courses: ScheduleCourse[];
+  filters: ScheduleFilterData;
+  summary: ScheduleSummary;
+}
+
+export interface SelectedScheduleState {
+  term: string;
+  selectedCourseIds: string[];
+  updatedAt: string;
+}
+
+export interface ScheduleConflict {
+  courseId: string;
+  courseName: string;
+  otherCourseId: string;
+  otherCourseName: string;
+  weekday: number;
+  period: number;
+  weeks: number[];
+}
+
+export interface ScheduleGridBlock {
+  id: string;
+  courseId: string;
+  courseName: string;
+  teacherText: string;
+  room: string;
+  weekday: number;
+  startPeriod: number;
+  endPeriod: number;
+  periods: number[];
+  weeks: number[];
+  rawWeeks: string;
+  isConflict: boolean;
+}

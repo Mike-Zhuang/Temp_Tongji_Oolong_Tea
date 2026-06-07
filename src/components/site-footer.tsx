@@ -28,6 +28,9 @@ export function SiteFooter({ user }: SiteFooterProps) {
           <a href="/search" className="underline-offset-4 hover:text-stone-900 hover:underline">
             搜索课程
           </a>
+          <a href="/scheduler" className="underline-offset-4 hover:text-stone-900 hover:underline">
+            模拟排课
+          </a>
           <a href="/auth" className="underline-offset-4 hover:text-stone-900 hover:underline">
             校园邮箱登录
           </a>

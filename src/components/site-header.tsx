@@ -7,10 +7,12 @@ import type { UserProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { AuthStatus } from "./auth-status";
+import { SearchBar } from "./search-bar";
 
 interface SiteHeaderProps {
   user: UserProfile | null;
   currentPath: string;
+  searchQuery?: string;
 }
 
 function navLinkClass(active: boolean) {
@@ -29,7 +31,8 @@ function mobileNavClass(active: boolean) {
   );
 }
 
-export function SiteHeader({ user, currentPath }: SiteHeaderProps) {
+export function SiteHeader({ user, currentPath, searchQuery = "" }: SiteHeaderProps) {
+  const showPersistentSearch = currentPath !== "/" && currentPath !== "/scheduler";
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
 
@@ -58,6 +61,13 @@ export function SiteHeader({ user, currentPath }: SiteHeaderProps) {
             className={navLinkClass(isNavActive(currentPath, "/search"))}
           >
             搜索
+          </a>
+          <a
+            href="/scheduler"
+            aria-current={isNavActive(currentPath, "/scheduler") ? "page" : undefined}
+            className={navLinkClass(isNavActive(currentPath, "/scheduler"))}
+          >
+            排课
           </a>
           <a
             href="/me"
@@ -93,6 +103,13 @@ export function SiteHeader({ user, currentPath }: SiteHeaderProps) {
           </button>
         </div>
       </div>
+      {showPersistentSearch ? (
+        <div className="border-t border-border px-4 pb-3 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-7xl">
+            <SearchBar initialQuery={searchQuery} compact />
+          </div>
+        </div>
+      ) : null}
       {menuOpen ? (
         <nav id={menuId} className="border-t border-border bg-background px-4 py-4 md:hidden" aria-label="移动导航">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-text-secondary">
@@ -103,6 +120,14 @@ export function SiteHeader({ user, currentPath }: SiteHeaderProps) {
               onClick={() => setMenuOpen(false)}
             >
               搜索
+            </a>
+            <a
+              href="/scheduler"
+              className={mobileNavClass(isNavActive(currentPath, "/scheduler"))}
+              aria-current={isNavActive(currentPath, "/scheduler") ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              排课
             </a>
             <a
               href="/me"

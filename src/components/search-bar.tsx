@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { focusRing } from "@/lib/ui-classes";
 import { cn } from "@/lib/utils";
@@ -7,6 +7,7 @@ interface SearchBarProps {
   initialQuery?: string;
   placeholder?: string;
   large?: boolean;
+  compact?: boolean;
 }
 
 function SearchIcon() {
@@ -28,8 +29,13 @@ export function SearchBar({
   initialQuery = "",
   placeholder = "搜索课程名、老师名、课号",
   large = false,
+  compact = false,
 }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,7 +52,7 @@ export function SearchBar({
       <div
         className={cn(
           "flex items-center gap-3 rounded-lg border border-border bg-surface",
-          large ? "px-4 py-4 sm:px-6" : "px-4 py-3",
+          large ? "px-4 py-4 sm:px-6" : compact ? "px-3 py-2" : "px-4 py-3",
         )}
       >
         <SearchIcon />
@@ -57,13 +63,14 @@ export function SearchBar({
           placeholder={placeholder}
           className={cn(
             "w-full bg-transparent text-stone-900 outline-none placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            large ? "text-base sm:text-lg" : "text-sm sm:text-base",
+            large ? "text-base sm:text-lg" : compact ? "text-sm" : "text-sm sm:text-base",
           )}
         />
         <button
           type="submit"
           className={cn(
-            "shrink-0 min-w-[4.5rem] whitespace-nowrap rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-accent-hover active:scale-[0.98]",
+            "shrink-0 whitespace-nowrap rounded-lg bg-accent font-semibold text-white transition duration-200 hover:bg-accent-hover active:scale-[0.98]",
+            compact ? "min-w-[3.5rem] px-3 py-1.5 text-xs" : "min-w-[4.5rem] px-4 py-2 text-sm",
             focusRing,
           )}
         >
