@@ -29,6 +29,11 @@ function slugifyTeacherName(value) {
     .replace(/[^\p{Letter}\p{Number}-]+/gu, "") || "unknown-teacher";
 }
 
+function toSafeNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 async function loadJson(filePath) {
   const content = await fs.readFile(filePath, "utf8");
   return JSON.parse(content);
@@ -65,10 +70,10 @@ async function main() {
     teacher_name: course.teacher,
     teacher_slug: slugifyTeacherName(course.teacher),
     department: course.department,
-    credit: course.credit,
+    credit: toSafeNumber(course.credit),
     categories: course.categories,
-    seed_rating_count: course.rating.count,
-    seed_rating_average: course.rating.avg,
+    seed_rating_count: toSafeNumber(course.rating?.count),
+    seed_rating_average: toSafeNumber(course.rating?.avg),
   }));
 
   const reviewsPayload = ratings.map((review) => ({
