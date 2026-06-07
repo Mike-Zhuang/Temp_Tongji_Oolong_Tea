@@ -34,6 +34,14 @@ function toSafeNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function uniqueByKey(items, getKey) {
+  const itemMap = new Map();
+  items.forEach((item) => {
+    itemMap.set(getKey(item), item);
+  });
+  return Array.from(itemMap.values());
+}
+
 async function loadJson(filePath) {
   const content = await fs.readFile(filePath, "utf8");
   return JSON.parse(content);
@@ -99,7 +107,11 @@ async function main() {
     user_id: null,
   }));
 
-  console.log(`准备导入 ${teachersPayload.length} 位老师、${coursesPayload.length} 门课程、${reviewsPayload.length} 条评论。`);
+  const uniqueCoursesPayload = uniqueByKey(coursesPayload, (course) => course.id);
+
+  console.log(
+    `准备导入 ${teachersPayload.length} 位老师、${uniqueCoursesPayload.length}/${coursesPayload.length} 门课程、${reviewsPayload.length} 条评论。`,
+  );
 
   const teacherResult = await supabase.from("teachers").upsert(teachersPayload, {
     onConflict: "slug",
@@ -108,7 +120,7 @@ async function main() {
     throw teacherResult.error;
   }
 
-  const courseResult = await supabase.from("courses").upsert(coursesPayload, {
+  const courseResult = await supabase.from("courses").upsert(uniqueCoursesPayload, {
     onConflict: "id",
   });
   if (courseResult.error) {
