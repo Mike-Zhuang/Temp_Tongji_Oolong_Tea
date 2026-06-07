@@ -70,6 +70,25 @@ async function main() {
     teacherMap.set(teacherSlug, current);
   }
 
+  for (const review of ratings) {
+    const teacherSlug = slugifyTeacherName(review.course.teacher);
+    if (!teacherMap.has(teacherSlug)) {
+      teacherMap.set(teacherSlug, {
+        slug: teacherSlug,
+        name: review.course.teacher,
+        department_hints: [],
+      });
+    }
+  }
+
+  const courseIds = new Set(courses.map((course) => course.id));
+  const missingCoursesFromReviews = uniqueByKey(
+    ratings
+      .filter((review) => !courseIds.has(review.course.id))
+      .map((review) => review.course),
+    (course) => course.id,
+  );
+
   const teachersPayload = Array.from(teacherMap.values());
   const coursesPayload = courses.map((course) => ({
     id: course.id,
@@ -82,6 +101,18 @@ async function main() {
     categories: course.categories,
     seed_rating_count: toSafeNumber(course.rating?.count),
     seed_rating_average: toSafeNumber(course.rating?.avg),
+  }));
+  const missingCoursesPayload = missingCoursesFromReviews.map((course) => ({
+    id: course.id,
+    code: course.code,
+    name: course.name,
+    teacher_name: course.teacher,
+    teacher_slug: slugifyTeacherName(course.teacher),
+    department: null,
+    credit: 0,
+    categories: [],
+    seed_rating_count: 0,
+    seed_rating_average: 0,
   }));
 
   const reviewsPayload = ratings.map((review) => ({
@@ -107,10 +138,10 @@ async function main() {
     user_id: null,
   }));
 
-  const uniqueCoursesPayload = uniqueByKey(coursesPayload, (course) => course.id);
+  const uniqueCoursesPayload = uniqueByKey([...coursesPayload, ...missingCoursesPayload], (course) => course.id);
 
   console.log(
-    `准备导入 ${teachersPayload.length} 位老师、${uniqueCoursesPayload.length}/${coursesPayload.length} 门课程、${reviewsPayload.length} 条评论。`,
+    `准备导入 ${teachersPayload.length} 位老师、${uniqueCoursesPayload.length}/${coursesPayload.length} 门课程、${reviewsPayload.length} 条评论。补全缺失课程 ${missingCoursesPayload.length} 门。`,
   );
 
   const teacherResult = await supabase.from("teachers").upsert(teachersPayload, {
