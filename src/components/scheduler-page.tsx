@@ -5,11 +5,12 @@ import { SectionTitle } from "@/components/section-title";
 import { PageErrorState, SchedulerLoadingSkeleton } from "@/components/ui/page-states";
 import { PageSection } from "@/components/ui/page-section";
 import { StatInline } from "@/components/ui/stat-inline";
-import { getScheduleData, getUserSchedule, saveUserSchedule } from "@/lib/data-client";
+import { getScheduleData, getScheduleEvaluationIndex, getUserSchedule, saveUserSchedule } from "@/lib/data-client";
 import {
   EMPTY_SCHEDULE_FILTERS,
   PERIOD_LABELS,
   WEEKDAY_LABELS,
+  buildScheduleEvaluationMatches,
   buildConflictCellSet,
   buildScheduleGridBlocks,
   detectConflictsForCourse,
@@ -24,10 +25,12 @@ import type {
   ScheduleConflict,
   ScheduleCourse,
   ScheduleData,
+  ScheduleEvaluationIndex,
+  ScheduleEvaluationMatchResult,
   ScheduleFilters,
   UserProfile,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { buildCourseUrl, buildTeacherUrl, cn, formatRating } from "@/lib/utils";
 
 import { Button } from "./ui/button";
 
@@ -124,14 +127,107 @@ function CourseScheduleSummary({ course }: { course: ScheduleCourse }) {
   );
 }
 
+function EvaluationReference({ match }: { match: ScheduleEvaluationMatchResult | undefined }) {
+  if (!match) {
+    return (
+      <div className="mt-4 rounded-md bg-surface-muted p-3 text-sm text-text-muted">
+        正在匹配评课数据...
+      </div>
+    );
+  }
+
+  if (match.courseMatches.length > 0) {
+    const hasHighConfidence = match.courseMatches.some((item) => item.confidence === "high");
+    return (
+      <div className="mt-4 rounded-md border border-border bg-surface-muted p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-stone-900">
+            {hasHighConfidence ? "评价参考" : "可能相关课程评价"}
+          </p>
+          <a href={buildCourseUrl(match.courseMatches[0].courseId)} className="text-xs font-semibold text-accent hover:text-accent-hover">
+            查看完整评论
+          </a>
+        </div>
+        <div className="mt-3 space-y-2">
+          {match.courseMatches.map((item) => (
+            <a
+              key={item.courseId}
+              href={buildCourseUrl(item.courseId)}
+              className="block rounded-md bg-surface px-3 py-2 text-sm transition hover:bg-accent-soft"
+            >
+              <span className="block font-semibold text-stone-950">
+                {item.courseName} · {item.teacherName}
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-text-muted">
+                {formatEvaluationRating(item.averageRating)} · {item.reviewCount} 条评论 · {item.reason}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (match.teacherMatches.length > 0) {
+    return (
+      <div className="mt-4 rounded-md border border-border bg-surface-muted p-3">
+        <p className="text-sm font-semibold text-stone-900">暂无对应课程评价，可先看老师评价</p>
+        <div className="mt-3 space-y-2">
+          {match.teacherMatches.map((teacher) => (
+            <a
+              key={teacher.slug}
+              href={buildTeacherUrl(teacher.slug)}
+              className="block rounded-md bg-surface px-3 py-2 text-sm transition hover:bg-accent-soft"
+            >
+              <span className="block font-semibold text-stone-950">{teacher.name}</span>
+              <span className="mt-1 block text-xs leading-5 text-text-muted">
+                {formatEvaluationRating(teacher.averageRating)} · {teacher.reviewCount} 条评论 · {teacher.courseCount} 门课
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-md border border-border bg-surface-muted p-3 text-sm">
+      <p className="font-semibold text-stone-900">暂无匹配评价</p>
+      <a href={match.fallbackSearchUrl} className="mt-2 inline-flex font-semibold text-accent hover:text-accent-hover">
+        去评课搜索里找找
+      </a>
+    </div>
+  );
+}
+
+function getEvaluationHref(match: ScheduleEvaluationMatchResult | undefined) {
+  if (!match) {
+    return "";
+  }
+  if (match.courseMatches[0]) {
+    return buildCourseUrl(match.courseMatches[0].courseId);
+  }
+  if (match.teacherMatches[0]) {
+    return buildTeacherUrl(match.teacherMatches[0].slug);
+  }
+  return match.fallbackSearchUrl;
+}
+
+function formatEvaluationRating(value: number) {
+  const formatted = formatRating(value);
+  return formatted === "暂无" ? "暂无评分" : `${formatted} 分`;
+}
+
 function ScheduleCourseCard({
   course,
   selected,
+  evaluationMatch,
   onAdd,
   onRemove,
 }: {
   course: ScheduleCourse;
   selected: boolean;
+  evaluationMatch: ScheduleEvaluationMatchResult | undefined;
   onAdd: (course: ScheduleCourse) => void;
   onRemove: (courseId: string) => void;
 }) {
@@ -174,6 +270,7 @@ function ScheduleCourseCard({
       <div className="mt-4">
         <CourseScheduleSummary course={course} />
       </div>
+      <EvaluationReference match={evaluationMatch} />
       {(course.audience || course.rawSchedule) && (
         <div className="mt-4">
           <button
@@ -441,6 +538,7 @@ function CloudMergeBar({
 
 export function SchedulerPage({ user }: SchedulerPageProps) {
   const [data, setData] = useState<ScheduleData | null>(null);
+  const [evaluationIndex, setEvaluationIndex] = useState<ScheduleEvaluationIndex | null>(null);
   const [error, setError] = useState("");
   const [filters, setFilters] = useState<ScheduleFilters>(EMPTY_SCHEDULE_FILTERS);
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
@@ -451,9 +549,10 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
   const cloudReadyRef = useRef(false);
 
   useEffect(() => {
-    getScheduleData()
-      .then((loadedData) => {
+    Promise.all([getScheduleData(), getScheduleEvaluationIndex()])
+      .then(([loadedData, loadedEvaluationIndex]) => {
         setData(loadedData);
+        setEvaluationIndex(loadedEvaluationIndex);
         const localIds = loadLocalSelectedIds(loadedData.filters.term);
         setSelectedCourseIds(localIds);
         hydratedTermRef.current = loadedData.filters.term;
@@ -540,6 +639,12 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
     return filterScheduleCourses(data.courses, filters, data.filters.generalEducationNatures);
   }, [data, filters]);
   const conflicts = useMemo(() => detectScheduleConflicts(selectedCourses), [selectedCourses]);
+  const evaluationMatches = useMemo(() => {
+    if (!data || !evaluationIndex) {
+      return new Map<string, ScheduleEvaluationMatchResult>();
+    }
+    return buildScheduleEvaluationMatches(data.courses, evaluationIndex);
+  }, [data, evaluationIndex]);
 
   const updateFilter = <Key extends keyof ScheduleFilters>(key: Key, value: ScheduleFilters[Key]) => {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -687,6 +792,7 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
                     key={course.id}
                     course={course}
                     selected={selectedIdSet.has(course.id)}
+                    evaluationMatch={evaluationIndex ? evaluationMatches.get(course.id) : undefined}
                     onAdd={addCourse}
                     onRemove={removeCourse}
                   />
@@ -727,23 +833,36 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
             <SectionTitle title="已选课程" />
             <div className="mt-4 space-y-3">
               {selectedCourses.length ? (
-                selectedCourses.map((course) => (
-                  <div key={course.id} className="rounded-md border border-border bg-surface-muted p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-stone-950">{course.name}</p>
-                        <p className="mt-1 text-xs text-text-muted">{course.code} · {course.campus} · {course.nature}</p>
+                selectedCourses.map((course) => {
+                  const evaluationHref = evaluationIndex ? getEvaluationHref(evaluationMatches.get(course.id)) : "";
+                  return (
+                    <div key={course.id} className="rounded-md border border-border bg-surface-muted p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-stone-950">{course.name}</p>
+                          <p className="mt-1 text-xs text-text-muted">{course.code} · {course.campus} · {course.nature}</p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-2">
+                          {evaluationHref ? (
+                            <a
+                              href={evaluationHref}
+                              className={cn("text-xs font-semibold text-accent hover:text-accent-hover", focusRing)}
+                            >
+                              评价
+                            </a>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => removeCourse(course.id)}
+                            className={cn("text-xs font-semibold text-accent hover:text-accent-hover", focusRing)}
+                          >
+                            移除
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeCourse(course.id)}
-                        className={cn("shrink-0 text-xs font-semibold text-accent hover:text-accent-hover", focusRing)}
-                      >
-                        移除
-                      </button>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <p className="rounded-md bg-surface-muted p-4 text-sm text-text-muted">
                   还没有加入课程。可以先点时间格，或者直接在左侧搜索课程。

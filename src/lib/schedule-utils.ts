@@ -2,8 +2,12 @@ import type {
   ScheduleArrangement,
   ScheduleConflict,
   ScheduleCourse,
+  ScheduleEvaluationIndex,
+  ScheduleEvaluationMatchResult,
   ScheduleFilters,
   ScheduleGridBlock,
+  ScheduleReviewMatch,
+  ScheduleTeacherMatch,
 } from "@/lib/types";
 
 export const WEEKDAY_LABELS = ["", "周一", "周二", "周三", "周四", "周五", "周六", "周日"];
@@ -216,4 +220,166 @@ export function buildScheduleGridBlocks(selectedCourses: ScheduleCourse[], confl
 
 export function getCoursesAtCell(courses: ScheduleCourse[], weekday: number, period: number) {
   return courses.filter((course) => courseMatchesCell(course, weekday, period));
+}
+
+export function normalizeCourseName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[（(][^）)]*[）)]/g, "")
+    .replace(/\s+/g, "")
+    .replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g, (match) => {
+      const romanMap: Record<string, string> = {
+        Ⅰ: "1",
+        Ⅱ: "2",
+        Ⅲ: "3",
+        Ⅳ: "4",
+        Ⅴ: "5",
+        Ⅵ: "6",
+        Ⅶ: "7",
+        Ⅷ: "8",
+        Ⅸ: "9",
+        Ⅹ: "10",
+      };
+      return romanMap[match] ?? match;
+    })
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "");
+}
+
+function normalizeTeacherName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, "");
+}
+
+function getScheduleTeacherNames(course: ScheduleCourse) {
+  return Array.from(
+    new Set(
+      [
+        ...course.teachers,
+        course.leader,
+        ...course.arrangements.map((arrangement) => arrangement.teacher),
+      ]
+        .filter(Boolean)
+        .map(normalizeTeacherName),
+    ),
+  );
+}
+
+function namesMatch(left: string, right: string) {
+  const normalizedLeft = normalizeTeacherName(left);
+  const normalizedRight = normalizeTeacherName(right);
+  return Boolean(
+    normalizedLeft &&
+      normalizedRight &&
+      (normalizedLeft === normalizedRight ||
+        normalizedLeft.includes(normalizedRight) ||
+        normalizedRight.includes(normalizedLeft)),
+  );
+}
+
+function courseNamesSimilar(left: string, right: string) {
+  if (!left || !right) {
+    return false;
+  }
+  return left.includes(right) || right.includes(left);
+}
+
+function buildFallbackSearchUrl(course: ScheduleCourse) {
+  const query = [course.name, course.teachers[0] ?? course.teacherText].filter(Boolean).join(" ");
+  return `/search?q=${encodeURIComponent(query)}`;
+}
+
+export function matchScheduleCourseToEvaluations(
+  course: ScheduleCourse,
+  index: ScheduleEvaluationIndex | null,
+): ScheduleEvaluationMatchResult {
+  if (!index) {
+    return {
+      courseMatches: [],
+      teacherMatches: [],
+      fallbackSearchUrl: buildFallbackSearchUrl(course),
+    };
+  }
+
+  const scheduleName = normalizeCourseName(course.name);
+  const scheduleCode = course.code === "未编号" ? "" : course.code.trim().toLowerCase();
+  const scheduleTeachers = getScheduleTeacherNames(course);
+  const courseMatches: ScheduleReviewMatch[] = [];
+
+  index.courses.forEach((reviewCourse) => {
+    const reviewName = normalizeCourseName(reviewCourse.courseName);
+    const codeMatches = Boolean(scheduleCode && scheduleCode === reviewCourse.courseCode.trim().toLowerCase());
+    const exactNameMatches = Boolean(scheduleName && scheduleName === reviewName);
+    const similarNameMatches = courseNamesSimilar(scheduleName, reviewName);
+    const teacherMatches = scheduleTeachers.some((teacherName) => namesMatch(teacherName, reviewCourse.teacherName));
+
+    let score = 0;
+    let confidence: ScheduleReviewMatch["confidence"] = "candidate";
+    let reason = "";
+
+    if (codeMatches && (exactNameMatches || similarNameMatches)) {
+      score = 120;
+      confidence = "high";
+      reason = "课号一致，课程名相近";
+    } else if (exactNameMatches && teacherMatches) {
+      score = 105;
+      confidence = "high";
+      reason = "课程名和教师一致";
+    } else if (exactNameMatches) {
+      score = 72;
+      reason = "课程名一致，教师可能不同";
+    } else if (similarNameMatches && teacherMatches) {
+      score = 64;
+      reason = "课程名相近，教师一致";
+    }
+
+    if (score <= 0) {
+      return;
+    }
+
+    courseMatches.push({
+      ...reviewCourse,
+      confidence,
+      reason,
+      score,
+    });
+  });
+
+  const sortedCourseMatches = courseMatches
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        right.reviewCount - left.reviewCount ||
+        right.averageRating - left.averageRating,
+    )
+    .slice(0, 3);
+
+  const teacherMatches: ScheduleTeacherMatch[] = sortedCourseMatches.length
+    ? []
+    : index.teachers
+        .filter((teacher) => scheduleTeachers.some((teacherName) => namesMatch(teacherName, teacher.name)))
+        .map((teacher) => ({
+          ...teacher,
+          reason: "未匹配到对应课程，按任课教师兜底",
+          score: 40 + teacher.reviewCount,
+        }))
+        .sort(
+          (left, right) =>
+            right.score - left.score ||
+            right.reviewCount - left.reviewCount ||
+            right.averageRating - left.averageRating,
+        )
+        .slice(0, 2);
+
+  return {
+    courseMatches: sortedCourseMatches,
+    teacherMatches,
+    fallbackSearchUrl: buildFallbackSearchUrl(course),
+  };
+}
+
+export function buildScheduleEvaluationMatches(
+  courses: ScheduleCourse[],
+  index: ScheduleEvaluationIndex | null,
+) {
+  return new Map(courses.map((course) => [course.id, matchScheduleCourseToEvaluations(course, index)]));
 }

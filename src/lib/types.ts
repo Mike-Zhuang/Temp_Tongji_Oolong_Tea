@@ -237,6 +237,49 @@ export interface ScheduleData {
   summary: ScheduleSummary;
 }
 
+export type ScheduleEvaluationConfidence = "high" | "candidate";
+
+export interface ScheduleReviewIndexItem {
+  courseId: number;
+  courseCode: string;
+  courseName: string;
+  teacherName: string;
+  department: string | null;
+  categories: string[];
+  averageRating: number;
+  reviewCount: number;
+}
+
+export interface ScheduleTeacherIndexItem {
+  name: string;
+  slug: string;
+  courseCount: number;
+  averageRating: number;
+  reviewCount: number;
+}
+
+export interface ScheduleEvaluationIndex {
+  courses: ScheduleReviewIndexItem[];
+  teachers: ScheduleTeacherIndexItem[];
+}
+
+export interface ScheduleReviewMatch extends ScheduleReviewIndexItem {
+  confidence: ScheduleEvaluationConfidence;
+  reason: string;
+  score: number;
+}
+
+export interface ScheduleTeacherMatch extends ScheduleTeacherIndexItem {
+  reason: string;
+  score: number;
+}
+
+export interface ScheduleEvaluationMatchResult {
+  courseMatches: ScheduleReviewMatch[];
+  teacherMatches: ScheduleTeacherMatch[];
+  fallbackSearchUrl: string;
+}
+
 export interface SelectedScheduleState {
   term: string;
   selectedCourseIds: string[];

@@ -9,6 +9,7 @@ import type {
   ReviewFormInput,
   ReviewSort,
   ScheduleData,
+  ScheduleEvaluationIndex,
   SelectedScheduleState,
   SearchResult,
   SearchSort,
@@ -43,6 +44,7 @@ interface DataIndex {
 let dataIndexPromise: Promise<DataIndex> | null = null;
 let homeSummaryPromise: Promise<HomePageData | null> | null = null;
 let scheduleDataPromise: Promise<ScheduleData> | null = null;
+let scheduleEvaluationIndexPromise: Promise<ScheduleEvaluationIndex> | null = null;
 
 async function fetchAllRows<T>(tableName: string, orderColumn: string) {
   const supabase = createSupabaseBrowserClient();
@@ -312,6 +314,7 @@ function buildHomePageDataFromIndex(data: DataIndex): HomePageData {
 export function invalidateDataCache() {
   dataIndexPromise = null;
   homeSummaryPromise = null;
+  scheduleEvaluationIndexPromise = null;
 }
 
 async function fetchJson<T>(url: string) {
@@ -336,6 +339,32 @@ export async function getScheduleData(): Promise<ScheduleData> {
   }
 
   return scheduleDataPromise;
+}
+
+export async function getScheduleEvaluationIndex(): Promise<ScheduleEvaluationIndex> {
+  if (!scheduleEvaluationIndexPromise) {
+    scheduleEvaluationIndexPromise = loadDataIndex().then((data) => ({
+      courses: data.courses.map((course) => ({
+        courseId: course.id,
+        courseCode: course.code,
+        courseName: course.name,
+        teacherName: course.teacherName,
+        department: course.department,
+        categories: course.categories,
+        averageRating: course.averageRating,
+        reviewCount: course.reviewCount,
+      })),
+      teachers: data.teachers.map((teacher) => ({
+        name: teacher.name,
+        slug: teacher.slug,
+        courseCount: teacher.courseCount,
+        averageRating: teacher.averageRating,
+        reviewCount: teacher.reviewCount,
+      })),
+    }));
+  }
+
+  return scheduleEvaluationIndexPromise;
 }
 
 function computeSearchScore(target: string, query: string) {
