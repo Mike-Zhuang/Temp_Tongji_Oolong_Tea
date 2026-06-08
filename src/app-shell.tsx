@@ -20,7 +20,7 @@ import { SortPills } from "@/components/ui/sort-pills";
 import { StatInline } from "@/components/ui/stat-inline";
 import { ReportReviewButton } from "@/components/report-review-button";
 import { REVIEW_SORT_OPTIONS, SEARCH_SORT_OPTIONS, SITE_DESCRIPTION } from "@/lib/constants";
-import { getPageTitle } from "@/lib/nav-utils";
+import { getPageTitle, getSafeRedirect } from "@/lib/nav-utils";
 import {
   getAdminReviews,
   getCourseById,
@@ -143,7 +143,7 @@ export function App() {
       return <WriteReviewPage courseId={Number(route.path.replace("/write-review/", ""))} user={user} />;
     }
     if (route.path === "/auth") {
-      return <AuthPage />;
+      return <AuthPage redirectTo={getSafeRedirect(route.params.get("redirect"))} />;
     }
     if (route.path === "/auth/callback") {
       return <AuthCallbackPage />;
@@ -589,7 +589,7 @@ function WriteReviewPage({ courseId, user }: { courseId: number; user: UserProfi
   );
 }
 
-function AuthPage() {
+function AuthPage({ redirectTo }: { redirectTo: string }) {
   const authEnabled = hasSupabaseEnv();
 
   return (
@@ -601,7 +601,7 @@ function AuthPage() {
           description={authEnabled ? "站内评论采用同济校园邮箱验证码登录。输入邮箱收到的数字验证码后，即可回到本站发布评论。" : "登录配置暂不可用，请联系站长检查 Supabase 环境变量。"}
         />
         <div className="mt-8">
-          <LoginForm isEnabled={authEnabled} />
+          <LoginForm isEnabled={authEnabled} redirectTo={redirectTo} />
         </div>
       </PageSection>
       <PageSection variant="muted">
@@ -609,6 +609,7 @@ function AuthPage() {
         <ul className="mt-4 space-y-3 text-sm leading-7 text-stone-600">
           <li>先把发评论的门槛限定在同济校园邮箱，能显著减少灌水和恶意内容。</li>
           <li>登录后评论会直接公开，管理员主要处理被举报内容，不提前卡审核。</li>
+          <li>登录后排课可同步到云端，换设备也能恢复课表。</li>
         </ul>
       </PageSection>
     </div>

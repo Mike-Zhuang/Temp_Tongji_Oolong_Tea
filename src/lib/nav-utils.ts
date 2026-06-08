@@ -51,3 +51,11 @@ export function getPageTitle(path: string): string {
   }
   return base;
 }
+
+/** 登录后安全跳转：仅允许站内相对路径 */
+export function getSafeRedirect(value: string | null, fallback = "/me") {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return fallback;
+  }
+  return value;
+}

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { InfoPill } from "@/components/info-pill";
+import { SectionTitle } from "@/components/section-title";
+import { PageErrorState, SchedulerLoadingSkeleton } from "@/components/ui/page-states";
+import { PageSection } from "@/components/ui/page-section";
+import { StatInline } from "@/components/ui/stat-inline";
 import { getScheduleData, getUserSchedule, saveUserSchedule } from "@/lib/data-client";
 import {
   EMPTY_SCHEDULE_FILTERS,
@@ -14,7 +19,7 @@ import {
   formatWeeks,
   getCoursesAtCell,
 } from "@/lib/schedule-utils";
-import { alertError, alertSuccess, focusRing, inputField } from "@/lib/ui-classes";
+import { alertError, alertSuccess, cardHover, focusRing, inputField } from "@/lib/ui-classes";
 import type {
   ScheduleConflict,
   ScheduleCourse,
@@ -133,33 +138,33 @@ function ScheduleCourseCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <article className="rounded-lg border border-border bg-surface p-4 shadow-sm shadow-stone-200/40 transition hover:border-accent/30">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-2">
+    <article className={cn("rounded-lg border border-border bg-surface p-5", cardHover)}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-accent-soft px-2.5 py-1 font-mono text-xs font-semibold text-accent">
-              {course.code}
-            </span>
-            <span className="rounded-md bg-surface-muted px-2.5 py-1 text-xs text-text-secondary">
-              {course.nature}
-            </span>
+            <InfoPill tone="warm">{course.code}</InfoPill>
+            <InfoPill>{course.nature}</InfoPill>
           </div>
-          <h3 className="text-lg font-bold tracking-tight text-stone-950">{course.name}</h3>
-          <p className="text-sm leading-6 text-text-secondary">
-            {course.teachers.length ? course.teachers.join("、") : course.teacherText || "教师暂缺"}
-          </p>
+          <div>
+            <h3 className="text-xl font-bold text-stone-900">{course.name}</h3>
+            <p className="mt-2 text-sm leading-6 text-text-secondary">
+              {course.teachers.length ? course.teachers.join("、") : course.teacherText || "教师暂缺"}
+            </p>
+          </div>
         </div>
-        {selected ? (
-          <Button type="button" variant="secondary" className="shrink-0 px-4 py-2" onClick={() => onRemove(course.id)}>
-            移除
-          </Button>
-        ) : (
-          <Button type="button" className="shrink-0 px-4 py-2" onClick={() => onAdd(course)}>
-            加入课表
-          </Button>
-        )}
+        <div className="shrink-0 sm:self-end">
+          {selected ? (
+            <Button type="button" variant="secondary" className="px-4 py-2" onClick={() => onRemove(course.id)}>
+              移除课程
+            </Button>
+          ) : (
+            <Button type="button" className="px-4 py-2" onClick={() => onAdd(course)}>
+              加入课表
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap gap-2">
         <CourseMeta label="校区" value={course.campus} />
         <CourseMeta label="语言" value={course.language} />
         <CourseMeta label="学院" value={course.department} />
@@ -223,8 +228,10 @@ function TimeFilterGrid({
                     key={`${weekday}-${period}`}
                     type="button"
                     onClick={() => onPickCell(weekday, period)}
+                    aria-pressed={active}
+                    aria-label={`${WEEKDAY_LABELS[weekday]} ${PERIOD_LABELS[period]}，${count} 门可选`}
                     className={cn(
-                      "min-h-12 border-b border-l border-border p-2 text-left transition",
+                      "min-h-12 border-b border-l border-border p-2 text-left transition duration-200",
                       active
                         ? "bg-accent text-white"
                         : count
@@ -292,12 +299,12 @@ function SelectedTimetable({
                     type="button"
                     onClick={() => onCellClick(weekday, period)}
                     className={cn(
-                      "border-b border-l border-border transition",
+                      "border-b border-l border-border transition duration-200",
                       conflict ? "bg-rose-50" : "bg-white hover:bg-surface-muted",
                       focusRing,
                     )}
                     style={{ gridColumn: weekday + 1, gridRow: period + 1 }}
-                    aria-label={`${WEEKDAY_LABELS[weekday]} ${PERIOD_LABELS[period]}`}
+                    aria-label={`${WEEKDAY_LABELS[weekday]} ${PERIOD_LABELS[period]}${conflict ? "，存在冲突" : ""}`}
                   />
                 );
               })}
@@ -308,7 +315,7 @@ function SelectedTimetable({
           <div
             key={block.id}
             className={cn(
-              "pointer-events-none z-10 m-1 overflow-hidden rounded-md border p-2 leading-5 shadow-sm",
+              "pointer-events-none z-10 m-1 overflow-hidden rounded-md border p-2 leading-5",
               block.isConflict
                 ? "border-rose-300 bg-rose-100 text-rose-950"
                 : "border-orange-200 bg-accent-soft text-stone-950",
@@ -339,33 +346,73 @@ function ConflictDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  if (!pending) {
-    return null;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const confirmedRef = useRef(false);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+    if (pending && !dialog.open) {
+      confirmedRef.current = false;
+      dialog.showModal();
+      dialog.querySelector<HTMLButtonElement>("button")?.focus();
+    }
+    if (!pending && dialog.open) {
+      dialog.close();
+    }
+  }, [pending]);
+
+  function handleClose() {
+    if (!confirmedRef.current) {
+      onCancel();
+    }
+    confirmedRef.current = false;
+  }
+
+  function handleConfirm() {
+    confirmedRef.current = true;
+    onConfirm();
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/35 px-4 py-6">
-      <div className="w-full max-w-lg rounded-lg border border-border bg-surface p-6 shadow-2xl">
-        <p className="text-sm font-semibold text-error">检测到时间冲突</p>
-        <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-950">仍然加入 {pending.course.name} 吗？</h2>
-        <div className="mt-4 max-h-64 space-y-3 overflow-y-auto text-sm leading-6 text-text-secondary">
-          {pending.conflicts.slice(0, 8).map((conflict, index) => (
-            <p key={`${conflict.otherCourseId}-${conflict.period}-${index}`}>
-              与 <span className="font-semibold text-stone-950">{conflict.otherCourseName}</span> 冲突：
-              {WEEKDAY_LABELS[conflict.weekday]} 第 {conflict.period} 节，{formatWeeks(conflict.weeks)}
-            </p>
-          ))}
-        </div>
-        <div className="mt-6 flex flex-wrap justify-end gap-3">
-          <Button type="button" variant="secondary" onClick={onCancel}>
-            取消
-          </Button>
-          <Button type="button" onClick={onConfirm}>
-            仍然加入并高亮
-          </Button>
-        </div>
-      </div>
-    </div>
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-0 z-50 m-auto w-[calc(100%-2rem)] max-w-lg rounded-lg border border-border bg-surface p-6 backdrop:bg-stone-950/35 open:flex open:flex-col"
+      aria-labelledby="conflict-dialog-title"
+      aria-describedby="conflict-dialog-desc"
+      onCancel={(event) => {
+        event.preventDefault();
+        onCancel();
+      }}
+      onClose={handleClose}
+    >
+      {pending ? (
+        <>
+          <p className="text-sm font-semibold text-error">检测到时间冲突</p>
+          <h2 id="conflict-dialog-title" className="mt-2 text-2xl font-bold tracking-tight text-stone-950">
+            仍然加入 {pending.course.name} 吗？
+          </h2>
+          <div id="conflict-dialog-desc" className="mt-4 max-h-64 space-y-3 overflow-y-auto text-sm leading-6 text-text-secondary">
+            {pending.conflicts.slice(0, 8).map((conflict, index) => (
+              <p key={`${conflict.otherCourseId}-${conflict.period}-${index}`}>
+                与 <span className="font-semibold text-stone-950">{conflict.otherCourseName}</span> 冲突：
+                {WEEKDAY_LABELS[conflict.weekday]} 第 {conflict.period} 节，{formatWeeks(conflict.weeks)}
+              </p>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              取消加入
+            </Button>
+            <Button type="button" onClick={handleConfirm}>
+              仍然加入并高亮
+            </Button>
+          </div>
+        </>
+      ) : null}
+    </dialog>
   );
 }
 
@@ -375,9 +422,11 @@ function CloudMergeBar({
   onChoose: (choice: CloudMergeChoice) => void;
 }) {
   return (
-    <div className="rounded-lg border border-orange-200 bg-accent-soft p-4 text-sm text-text-secondary">
+    <PageSection variant="muted">
       <p className="font-semibold text-stone-950">检测到本地和云端都有课表</p>
-      <p className="mt-1">请选择这次打开页面时的处理方式。合并会保留两边课程，使用云端会覆盖本地显示。</p>
+      <p className="mt-1 text-sm leading-6 text-text-secondary">
+        请选择这次打开页面时的处理方式。合并会保留两边课程，使用云端会覆盖本地显示。
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" className="px-4 py-2" onClick={() => onChoose("merge")}>
           合并本地课表
@@ -386,7 +435,7 @@ function CloudMergeBar({
           使用云端课表
         </Button>
       </div>
-    </div>
+    </PageSection>
   );
 }
 
@@ -535,63 +584,49 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
 
   if (error) {
     return (
-      <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-3xl font-bold text-stone-950">排课数据加载失败</h1>
-        <p className="mt-4 text-sm leading-7 text-text-muted">{error}</p>
-      </div>
+      <PageErrorState
+        title="排课数据加载失败"
+        message={error}
+      />
     );
   }
 
   if (!data) {
-    return (
-      <div className="mx-auto flex min-h-[50vh] w-full max-w-3xl flex-col items-center justify-center px-4 text-center">
-        <div className="h-4 w-52 animate-pulse rounded-md bg-surface-muted" />
-        <p className="mt-4 text-sm text-text-muted">正在加载全校课表数据...</p>
-      </div>
-    );
+    return <SchedulerLoadingSkeleton />;
   }
 
   const visibleCourses = filteredCourses.slice(0, COURSE_LIST_LIMIT);
 
   return (
-    <div className="bg-[radial-gradient(circle_at_20%_0%,rgba(254,243,235,0.95),transparent_30%),linear-gradient(180deg,#f7f6f4_0%,#fff_46%,#f7f6f4_100%)] pb-16">
+    <div className="pb-16">
       <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
-          <div className="space-y-5">
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-              {data.filters.term}
-            </p>
-            <h1 className="text-balance text-4xl font-black tracking-tight text-stone-950 sm:text-5xl">
-              排课，不靠玄学手搓表格
-            </h1>
-            <p className="max-w-2xl text-base leading-8 text-text-secondary">
-              从全校课表中搜索课程、筛选校区和通识类别，点击时间格查看可选课程。加入冲突课程前会二次确认，确认后冲突格会直接高亮。
-            </p>
+        <PageSection variant="plain">
+          <SectionTitle
+            level={1}
+            eyebrow={data.filters.term}
+            title="模拟排课"
+            description="搜索全校课程、按校区和通识类别筛选，点击时间格查看可选课程。加入冲突课程前会二次确认，冲突格会直接高亮。"
+          />
+          <div className="mt-6">
+            <StatInline
+              items={[
+                { label: "课程记录", value: data.summary.courseCount.toString() },
+                { label: "有排课", value: data.summary.scheduledCourseCount.toString() },
+                { label: "已选", value: selectedCourseIds.length.toString() },
+                {
+                  label: "冲突点",
+                  value: conflicts.length.toString(),
+                  tone: conflicts.length > 0 ? "error" : "default",
+                },
+              ]}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-border bg-surface p-4">
-              <p className="text-2xl font-black">{data.summary.courseCount}</p>
-              <p className="mt-1 text-xs text-text-muted">课程记录</p>
-            </div>
-            <div className="rounded-lg border border-border bg-surface p-4">
-              <p className="text-2xl font-black">{data.summary.scheduledCourseCount}</p>
-              <p className="mt-1 text-xs text-text-muted">有排课</p>
-            </div>
-            <div className="rounded-lg border border-border bg-surface p-4">
-              <p className="text-2xl font-black">{selectedCourseIds.length}</p>
-              <p className="mt-1 text-xs text-text-muted">已选</p>
-            </div>
-            <div className={cn("rounded-lg border p-4", conflicts.length ? "border-rose-200 bg-rose-50" : "border-border bg-surface")}>
-              <p className="text-2xl font-black">{conflicts.length}</p>
-              <p className="mt-1 text-xs text-text-muted">冲突点</p>
-            </div>
-          </div>
-        </div>
+        </PageSection>
       </section>
 
       <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)] lg:px-8">
         <div className="space-y-6">
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+          <PageSection>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="space-y-1.5 text-sm font-medium text-stone-800 md:col-span-2">
                 <span>全文搜索</span>
@@ -619,14 +654,14 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
                 清空筛选
               </Button>
             </div>
-          </div>
+          </PageSection>
 
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+          <PageSection>
             <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-stone-950">点击时间格筛课</h2>
-                <p className="mt-1 text-sm text-text-muted">格子里的数字表示当前筛选条件下该时间可选课程数。</p>
-              </div>
+              <SectionTitle
+                title="点击时间格筛课"
+                description="格子里的数字表示当前筛选条件下该时间可选课程数。"
+              />
               {filters.weekday && filters.period ? (
                 <Button type="button" variant="ghost" onClick={() => setFilters((current) => ({ ...current, weekday: null, period: null }))}>
                   取消时间筛选
@@ -638,17 +673,13 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
               filters={filters}
               onPickCell={(weekday, period) => setFilters((current) => ({ ...current, weekday, period }))}
             />
-          </div>
+          </PageSection>
 
           <div className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight text-stone-950">课程池</h2>
-                <p className="mt-1 text-sm text-text-muted">
-                  已匹配 {filteredCourses.length} 门课程，当前显示前 {visibleCourses.length} 门。
-                </p>
-              </div>
-            </div>
+            <SectionTitle
+              title="课程池"
+              description={`已匹配 ${filteredCourses.length} 门课程，当前显示前 ${visibleCourses.length} 门。`}
+            />
             {visibleCourses.length ? (
               <div className="space-y-3">
                 {visibleCourses.map((course) => (
@@ -662,23 +693,20 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
                 ))}
               </div>
             ) : (
-              <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-muted">
+              <PageSection variant="muted" className="text-center text-sm text-text-muted">
                 当前筛选条件下没有课程。可以清空时间格或减少筛选条件再试。
-              </div>
+              </PageSection>
             )}
           </div>
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
           {cloudMerge ? <CloudMergeBar onChoose={chooseCloudMerge} /> : null}
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
+          <PageSection>
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-bold tracking-tight text-stone-950">我的课表</h2>
-                <p className="mt-1 text-sm text-text-muted">{syncMessage}</p>
-              </div>
+              <SectionTitle title="我的课表" description={syncMessage} />
               <Button type="button" variant="secondary" className="px-4 py-2" onClick={() => setSelectedCourseIds([])}>
-                清空
+                清空课表
               </Button>
             </div>
             <div className="mt-4">
@@ -693,10 +721,10 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
             ) : (
               <p className={cn(alertSuccess, "mt-3")}>当前已选课程没有检测到时间冲突。</p>
             )}
-          </div>
+          </PageSection>
 
-          <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-            <h2 className="text-xl font-bold tracking-tight text-stone-950">已选课程</h2>
+          <PageSection>
+            <SectionTitle title="已选课程" />
             <div className="mt-4 space-y-3">
               {selectedCourses.length ? (
                 selectedCourses.map((course) => (
@@ -722,7 +750,7 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
                 </p>
               )}
             </div>
-          </div>
+          </PageSection>
         </aside>
       </section>
 

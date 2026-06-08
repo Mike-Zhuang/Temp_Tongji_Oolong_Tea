@@ -27,9 +27,10 @@ export function AuthStatus({ user }: AuthStatusProps) {
   }
 
   if (!user) {
+    const loginHref = `/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
     return (
       <div className="flex items-center gap-2">
-        <Button href="/auth" className="px-4 py-2 text-sm">
+        <Button href={loginHref} className="px-4 py-2 text-sm">
           校园邮箱登录
         </Button>
       </div>
