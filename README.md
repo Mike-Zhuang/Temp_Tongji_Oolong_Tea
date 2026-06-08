@@ -76,7 +76,7 @@ npm run import:seed
 - 前端限制只允许 `@tongji.edu.cn` 邮箱
 - 登录方式使用 Supabase 邮箱 OTP 验证码，不要求用户设置密码
 - 生产环境建议在 Supabase Auth 中启用自定义 SMTP，避免默认邮件服务的低频率限制
-- 邮件模板建议突出 `{{ .Token }}` 这个 6 位验证码；`{{ .ConfirmationURL }}` 可作为兼容链接保留
+- 邮件模板建议突出 `{{ .Token }}` 这个数字验证码；`{{ .ConfirmationURL }}` 可作为兼容链接保留
 - Supabase Auth URL Configuration 建议填写：
   - Site URL: `https://1.mikezhuang.cn`
   - Redirect URLs: `https://1.mikezhuang.cn/auth/callback`

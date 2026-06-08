@@ -598,7 +598,7 @@ function AuthPage() {
         <SectionTitle
           level={1}
           title="只允许 @tongji.edu.cn"
-          description={authEnabled ? "站内评论采用同济校园邮箱验证码登录。输入邮箱收到的 6 位验证码后，即可回到本站发布评论。" : "登录配置暂不可用，请联系站长检查 Supabase 环境变量。"}
+          description={authEnabled ? "站内评论采用同济校园邮箱验证码登录。输入邮箱收到的数字验证码后，即可回到本站发布评论。" : "登录配置暂不可用，请联系站长检查 Supabase 环境变量。"}
         />
         <div className="mt-8">
           <LoginForm isEnabled={authEnabled} />

@@ -82,7 +82,7 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
     }
 
     setOtpSentTo(validation.email);
-    setMessage("验证码已发送到你的邮箱，请把邮件里的 6 位验证码填到下方。");
+    setMessage("验证码已发送到你的邮箱，请把邮件里的数字验证码填到下方。");
     setMessageTone("success");
   }
 
@@ -103,8 +103,8 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
       setMessageTone("error");
       return;
     }
-    if (!/^\d{6}$/.test(normalizedToken)) {
-      setMessage("请输入邮件中的 6 位数字验证码。");
+    if (!/^\d{6,8}$/.test(normalizedToken)) {
+      setMessage("请输入邮件中的数字验证码。");
       setMessageTone("error");
       return;
     }
@@ -173,8 +173,8 @@ export function LoginForm({ isEnabled }: LoginFormProps) {
             inputMode="numeric"
             autoComplete="one-time-code"
             value={token}
-            onChange={(event) => setToken(event.target.value.replace(/[^\d]/g, "").slice(0, 6))}
-            placeholder="输入 6 位数字"
+            onChange={(event) => setToken(event.target.value.replace(/[^\d]/g, "").slice(0, 8))}
+            placeholder="输入邮件中的数字验证码"
             disabled={!otpSentTo || isVerifying}
             className={inputField}
           />
