@@ -28,10 +28,10 @@ export function createSupabaseBrowserClient() {
       import.meta.env.VITE_SUPABASE_ANON_KEY,
       {
         auth: {
-          flowType: "pkce",
+          flowType: "implicit",
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: false,
+          detectSessionInUrl: true,
         },
       },
     );
