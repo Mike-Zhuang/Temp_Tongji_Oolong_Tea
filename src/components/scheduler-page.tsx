@@ -729,8 +729,8 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
         </PageSection>
       </section>
 
-      <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)] lg:px-8">
-        <div className="space-y-6">
+      <section className="mx-auto grid w-full max-w-7xl gap-6 px-4 sm:px-6 lg:h-[calc(100dvh-9rem)] lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.78fr)] lg:overflow-hidden lg:px-8">
+        <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
           <PageSection>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="space-y-1.5 text-sm font-medium text-stone-800 md:col-span-2">
@@ -806,7 +806,7 @@ export function SchedulerPage({ user }: SchedulerPageProps) {
           </div>
         </div>
 
-        <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+        <aside className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pl-1">
           {cloudMerge ? <CloudMergeBar onChoose={chooseCloudMerge} /> : null}
           <PageSection>
             <div className="flex flex-wrap items-start justify-between gap-3">
